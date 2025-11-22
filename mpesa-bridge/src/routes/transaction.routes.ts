@@ -5,6 +5,7 @@ import { transactionLimiter } from '../middleware/rateLimiter.middleware';
 import { validateTransactionInit, checkValidation } from '../middleware/validation.middleware';
 import { sanitizePhoneNumber } from '../middleware/sanitize.middleware';
 import { authenticateToken } from '../middleware/auth.middleware';
+import { authenticateApiKey } from '../middleware/apiKey.middleware';
 
 const router = Router();
 
@@ -18,10 +19,11 @@ router.post(
     TransactionController.initiate
 );
 
-// Alias for /initiate - used by frontend test payment
+// Alias for /initiate - used by frontend test payment with API key
 router.post(
     '/stk-push',
     transactionLimiter,
+    authenticateApiKey,  // Use API key auth for public API
     sanitizePhoneNumber,
     validateTransactionInit,
     checkValidation,
