@@ -7,9 +7,8 @@ import FeaturesPage from './pages/FeaturesPage';
 import PricingPage from './pages/PricingPage';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-
-// Temporary placeholder
-const Dashboard = () => <div className="min-h-screen flex items-center justify-center text-white">Dashboard Coming Soon</div>;
+import DashboardLayout from './layouts/DashboardLayout';
+import Overview from './pages/dashboard/Overview';
 
 function App() {
   return (
@@ -26,7 +25,9 @@ function App() {
 
           {/* Protected Routes (Dashboard) */}
           <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route element={<DashboardLayout />}>
+              <Route path="/dashboard" element={<Overview />} />
+            </Route>
           </Route>
 
           {/* Catch all */}
