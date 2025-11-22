@@ -1,0 +1,123 @@
+{
+    "info": {
+        "_postman_id": "mpesa-bridge-v1",
+        "name": "M-Pesa Bridge API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Create Project",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "var jsonData = pm.response.json();",
+                            "if (jsonData.project && jsonData.project.id) {",
+                            "    pm.environment.set(\"projectId\", jsonData.project.id);",
+                            "    console.log(\"Project ID set to: \" + jsonData.project.id);",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"name\": \"My Test Shop\",\n    \"callbackUrl\": \"http://localhost:3000/api/v1/callbacks/mpesa\"\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:3000/api/v1/projects",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "3000",
+                    "path": [
+                        "api",
+                        "v1",
+                        "projects"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "2. Initiate Payment",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "var jsonData = pm.response.json();",
+                            "if (jsonData.transactionId) {",
+                            "    pm.environment.set(\"transactionId\", jsonData.transactionId);",
+                            "    console.log(\"Transaction ID set to: \" + jsonData.transactionId);",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"phone\": \"254700000000\",\n    \"amount\": 1,\n    \"reference\": \"TestOrder\",\n    \"projectId\": \"{{projectId}}\"\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:3000/api/v1/transactions/initiate",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "3000",
+                    "path": [
+                        "api",
+                        "v1",
+                        "transactions",
+                        "initiate"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "3. Check Transaction Status",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "http://localhost:3000/api/v1/transactions/status/{{transactionId}}",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "3000",
+                    "path": [
+                        "api",
+                        "v1",
+                        "transactions",
+                        "status",
+                        "{{transactionId}}"
+                    ]
+                }
+            },
+            "response": []
+        }
+    ]
+}

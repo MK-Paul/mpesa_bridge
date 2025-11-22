@@ -1,0 +1,45 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  publicKey   String   @unique @map("public_key")
+  secretKey   String   @unique @map("secret_key")
+  callbackUrl String?  @map("callback_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  transactions Transaction[]
+
+  @@map("projects")
+}
+
+model Transaction {
+  id                String   @id @default(uuid())
+  projectId         String   @map("project_id")
+  merchantRequestId String?  @unique @map("merchant_request_id")
+  checkoutRequestId String?  @unique @map("checkout_request_id")
+  amount            Float
+  phoneNumber       String   @map("phone_number")
+  status            String   @default("PENDING")
+  source            String   @default("DIRECT_API")
+  metadata          String?
+  mpesaReceipt      String?  @map("mpesa_receipt")
+  failureReason     String?  @map("failure_reason")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@map("transactions")
+}
