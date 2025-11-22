@@ -132,30 +132,6 @@ export default function Login() {
                                     <input
                                         type="email"
                                         id="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        required
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                                        placeholder="you@example.com"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label htmlFor="password" className="block text-sm font-medium text-slate-400 mb-2">Password</label>
-                                    <input
-                                        type="password"
-                                        id="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                        placeholder="••••••••"
-                                        required
-                                    />
-                                    <div className="text-right mt-2">
-                                        <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                                            Forgot Password?
-                                        </Link>
-                                    </div>
                                 </div>
 
                                 <button
