@@ -47,7 +47,8 @@ app.use(express.static(frontendPath));
 
 // Handle SPA routing - return index.html for any unknown route
 // Handle SPA routing - return index.html for any unknown route
-app.get('/*', (req: Request, res: Response) => {
+// Handle SPA routing - return index.html for any unknown route
+app.use((req: Request, res: Response) => {
     // If it's an API request that wasn't handled, let it fall through to error handler
     if (req.path.startsWith('/api')) {
         return res.status(404).json({ error: 'API endpoint not found' });
