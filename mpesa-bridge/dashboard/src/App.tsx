@@ -13,6 +13,7 @@ import { ProjectProvider } from './context/ProjectContext';
 import DashboardLayout from './layouts/DashboardLayout';
 import AdminLayout from './layouts/AdminLayout';
 import Overview from './pages/dashboard/Overview';
+import Projects from './pages/dashboard/Projects';
 import Transactions from './pages/dashboard/Transactions';
 import APIKeys from './pages/dashboard/APIKeys';
 import Settings from './pages/dashboard/Settings';
@@ -40,6 +41,7 @@ function App() {
             <Route element={<ProtectedRoute />}>
               <Route element={<DashboardLayout />}>
                 <Route path="/dashboard" element={<Overview />} />
+                <Route path="/dashboard/projects" element={<Projects />} />
                 <Route path="/dashboard/transactions" element={<Transactions />} />
                 <Route path="/dashboard/keys" element={<APIKeys />} />
                 <Route path="/dashboard/settings" element={<Settings />} />

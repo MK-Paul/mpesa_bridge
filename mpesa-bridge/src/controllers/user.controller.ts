@@ -371,56 +371,75 @@ export class UserController {
                 return;
             }
 
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            // Return empty data if ApiCall table doesn't exist yet
+            try {
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-            // @ts-ignore - ApiCall model exists but TS might not know yet
-            const apiCalls = await prisma.apiCall.findMany({
-                where: {
-                    userId,
-                    createdAt: { gte: sevenDaysAgo }
-                },
-                orderBy: { createdAt: 'asc' }
-            });
+                // @ts-ignore - ApiCall model exists but TS might not know yet
+                const apiCalls = await prisma.apiCall.findMany({
+                    where: {
+                        userId,
+                        createdAt: { gte: sevenDaysAgo }
+                    },
+                    orderBy: { createdAt: 'asc' }
+                });
 
-            // Aggregate by day
-            const dailyUsage: Record<string, number> = {};
-            // Initialize last 7 days with 0
-            for (let i = 6; i >= 0; i--) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                const dateStr = d.toISOString().split('T')[0];
-                dailyUsage[dateStr] = 0;
-            }
-
-            apiCalls.forEach((call: any) => {
-                const dateStr = call.createdAt.toISOString().split('T')[0];
-                if (dailyUsage[dateStr] !== undefined) {
-                    dailyUsage[dateStr]++;
+                // Aggregate by day
+                const dailyUsage: Record<string, number> = {};
+                // Initialize last 7 days with 0
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const dateStr = d.toISOString().split('T')[0];
+                    dailyUsage[dateStr] = 0;
                 }
-            });
 
-            const usageHistory = Object.entries(dailyUsage)
-                .map(([date, count]) => ({ date, count }))
-                .sort((a, b) => a.date.localeCompare(b.date));
+                apiCalls.forEach((call: any) => {
+                    const dateStr = call.createdAt.toISOString().split('T')[0];
+                    if (dailyUsage[dateStr] !== undefined) {
+                        dailyUsage[dateStr]++;
+                    }
+                });
 
-            // Aggregate by endpoint
-            const endpointUsage: Record<string, number> = {};
-            apiCalls.forEach((call: any) => {
-                const endpoint = `${call.method} ${call.endpoint}`;
-                endpointUsage[endpoint] = (endpointUsage[endpoint] || 0) + 1;
-            });
+                const usageHistory = Object.entries(dailyUsage)
+                    .map(([date, count]) => ({ date, count }))
+                    .sort((a, b) => a.date.localeCompare(b.date));
 
-            const topEndpoints = Object.entries(endpointUsage)
-                .map(([endpoint, count]) => ({ endpoint, count }))
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 5);
+                // Aggregate by endpoint
+                const endpointUsage: Record<string, number> = {};
+                apiCalls.forEach((call: any) => {
+                    const endpoint = `${call.method} ${call.endpoint}`;
+                    endpointUsage[endpoint] = (endpointUsage[endpoint] || 0) + 1;
+                });
 
-            res.status(200).json({
-                totalCalls: apiCalls.length,
-                usageHistory,
-                topEndpoints
-            });
+                const topEndpoints = Object.entries(endpointUsage)
+                    .map(([endpoint, count]) => ({ endpoint, count }))
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 5);
+
+                res.status(200).json({
+                    totalCalls: apiCalls.length,
+                    usageHistory,
+                    topEndpoints
+                });
+            } catch (dbError) {
+                // If ApiCall table doesn't exist, return empty data
+                console.log('ApiCall table not accessible, returning empty data:', dbError);
+
+                const dailyUsage: { date: string; count: number }[] = [];
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    dailyUsage.push({ date: d.toISOString().split('T')[0], count: 0 });
+                }
+
+                res.status(200).json({
+                    totalCalls: 0,
+                    usageHistory: dailyUsage,
+                    topEndpoints: []
+                });
+            }
         } catch (error) {
             console.error('Get API usage error:', error);
             res.status(500).json({ message: 'Internal server error' });

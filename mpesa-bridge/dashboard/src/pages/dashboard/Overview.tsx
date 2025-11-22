@@ -104,7 +104,6 @@ export default function Overview() {
 
         try {
             setTestLoading(true);
-            const token = localStorage.getItem('token');
             const keys = activeProject[environment === 'SANDBOX' ? 'testPublicKey' : 'publicKey'];
 
             await axios.post(

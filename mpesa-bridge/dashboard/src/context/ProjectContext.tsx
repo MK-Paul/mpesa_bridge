@@ -24,6 +24,7 @@ interface ProjectContextType {
     createProject: (name: string) => Promise<void>;
     deleteProject: (id: string) => Promise<void>;
     switchProject: (projectId: string) => void;
+    setActiveProject: (project: Project) => void;
     refreshProjects: () => Promise<void>;
     toggleEnvironment: () => void;
 }
@@ -140,6 +141,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
             createProject,
             deleteProject,
             switchProject,
+            setActiveProject,
             refreshProjects: fetchProjects,
             toggleEnvironment
         }}>

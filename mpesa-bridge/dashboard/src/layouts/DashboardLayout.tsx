@@ -10,7 +10,8 @@ import {
     Menu,
     X,
     TestTube,
-    Globe
+    Globe,
+    FolderOpen
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -26,6 +27,7 @@ export default function DashboardLayout() {
 
     const menuItems = [
         { path: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+        { path: '/dashboard/projects', label: 'Projects', icon: FolderOpen },
         { path: '/dashboard/transactions', label: 'Transactions', icon: Receipt },
         { path: '/dashboard/keys', label: 'API Keys', icon: Key },
         { path: '/dashboard/settings', label: 'Settings', icon: Settings },
