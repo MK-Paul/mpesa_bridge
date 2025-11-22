@@ -1,10 +1,17 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Zap, ArrowRight, Github } from 'lucide-react';
-import { useEffect } from 'react';
+import { Zap, ArrowRight, Github, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { authService } from '../../services/auth.service';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Login() {
     const navigate = useNavigate();
+    const { login } = useAuth();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -16,6 +23,22 @@ export default function Login() {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [navigate]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+
+        try {
+            const response = await authService.login(email, password);
+            login(response.token, response.user);
+            navigate('/dashboard');
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Failed to login. Please check your credentials.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-background flex items-center justify-center p-6 relative overflow-hidden">
@@ -41,11 +64,20 @@ export default function Login() {
                     <p className="text-slate-400">Sign in to manage your payments</p>
                 </div>
 
-                <form className="space-y-4">
+                {error && (
+                    <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+                        {error}
+                    </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-slate-400 mb-1">Email Address</label>
                         <input
                             type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                             placeholder="you@company.com"
                         />
@@ -58,13 +90,19 @@ export default function Login() {
                         </div>
                         <input
                             type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                             placeholder="••••••••"
                         />
                     </div>
 
-                    <button className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02]">
-                        Sign In <ArrowRight size={18} />
+                    <button 
+                        disabled={loading}
+                        className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {loading ? <Loader2 size={18} className="animate-spin" /> : <>Sign In <ArrowRight size={18} /></>}
                     </button>
                 </form>
 
