@@ -140,12 +140,12 @@ export default function AdminTransactions() {
                                     <tr key={tx.id} className="hover:bg-white/5 transition-colors">
                                         <td className="px-6 py-4">
                                             <div>
-                                                <p className="font-medium text-white">{tx.project.user.name}</p>
-                                                <p className="text-xs text-slate-400">{tx.project.user.email}</p>
+                                                <p className="font-medium text-white">{tx.project?.user?.name || 'Unknown User'}</p>
+                                                <p className="text-xs text-slate-400">{tx.project?.user?.email || 'N/A'}</p>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="text-slate-300">{tx.project.name}</span>
+                                            <span className="text-slate-300">{tx.project?.name || 'Unknown Project'}</span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="text-white">{tx.phoneNumber}</span>

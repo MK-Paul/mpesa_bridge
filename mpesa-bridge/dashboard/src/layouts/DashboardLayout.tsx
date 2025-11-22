@@ -74,6 +74,16 @@ export default function DashboardLayout() {
                 </nav>
 
                 <div className="p-4 border-t border-white/10">
+                    {/* Admin Panel Link - Only shown to admins */}
+                    {user?.role === 'ADMIN' && (
+                        <Link
+                            to="/admin"
+                            className="flex items-center gap-3 px-4 py-3 mb-2 rounded-xl text-orange-400 hover:bg-orange-500/10 transition-all w-full"
+                        >
+                            <Settings size={20} />
+                            <span className="font-medium">Admin Panel</span>
+                        </Link>
+                    )}
                     <button
                         onClick={handleLogout}
                         className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all w-full"
