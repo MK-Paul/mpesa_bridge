@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { DollarSign, Users, TrendingUp, Activity, Loader2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { DollarSign, Users, TrendingUp, Activity, Loader2, ArrowUpRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
