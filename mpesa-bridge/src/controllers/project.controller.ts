@@ -50,6 +50,42 @@ export class ProjectController {
         }
     }
 
+    static async update(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const { id } = req.params;
+            const userId = req.userId;
+            const { name } = req.body;
+
+            if (!userId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
+
+            const project = await prisma.project.findFirst({
+                where: { id, userId }
+            });
+
+            if (!project) {
+                res.status(404).json({ error: 'Project not found' });
+                return;
+            }
+
+            const updatedProject = await prisma.project.update({
+                where: { id },
+                data: { name },
+            });
+
+            res.status(200).json({
+                message: 'Project updated successfully',
+                project: updatedProject
+            });
+
+        } catch (error) {
+            console.error('Project Update Error:', error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        }
+    }
+
     static async delete(req: AuthRequest, res: Response): Promise<void> {
         try {
             const { id } = req.params;

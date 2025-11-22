@@ -11,6 +11,7 @@ const router = Router();
 router.use(authenticateToken);
 
 router.post('/', projectCreationLimiter, validateProjectCreation, checkValidation, ProjectController.create);
+router.patch('/:id', ProjectController.update);
 router.delete('/:id', ProjectController.delete);
 router.put('/:id/regenerate', ProjectController.regenerateKeys);
 router.put('/:id/webhook', ProjectController.updateWebhook);

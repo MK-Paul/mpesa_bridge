@@ -24,7 +24,7 @@ export default function Projects() {
             setLoading(true);
             const token = localStorage.getItem('token');
             const response = await axios.post(
-                `${import.meta.env.VITE_API_URL}/user/projects`,
+                `${import.meta.env.VITE_API_URL}/projects`,
                 { name: newProjectName },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -54,7 +54,7 @@ export default function Projects() {
             setLoading(true);
             const token = localStorage.getItem('token');
             await axios.patch(
-                `${import.meta.env.VITE_API_URL}/user/projects/${projectId}`,
+                `${import.meta.env.VITE_API_URL}/projects/${projectId}`,
                 { name: editName },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -81,7 +81,7 @@ export default function Projects() {
             setLoading(true);
             const token = localStorage.getItem('token');
             await axios.delete(
-                `${import.meta.env.VITE_API_URL}/user/projects/${projectId}`,
+                `${import.meta.env.VITE_API_URL}/projects/${projectId}`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
@@ -126,8 +126,8 @@ export default function Projects() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         className={`glass rounded-2xl p-6 border transition-all ${activeProject?.id === project.id
-                                ? 'border-primary shadow-lg shadow-primary/20'
-                                : 'border-white/10 hover:border-white/20'
+                            ? 'border-primary shadow-lg shadow-primary/20'
+                            : 'border-white/10 hover:border-white/20'
                             }`}
                     >
                         <div className="flex items-start justify-between mb-4">
