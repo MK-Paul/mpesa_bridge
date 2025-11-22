@@ -43,7 +43,12 @@ export const authenticateApiKey = async (
             return;
         }
 
-        // Check if user is banned
+        // Check if user exists and is not banned
+        if (!project.user) {
+            res.status(403).json({ error: 'User account not found' });
+            return;
+        }
+
         if (project.user.status === 'BANNED') {
             res.status(403).json({ error: 'Account suspended. Contact support.' });
             return;
