@@ -31,13 +31,14 @@ interface ProjectContextType {
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { user, token } = useAuth();
+    const { user } = useAuth();
     const [projects, setProjects] = useState<Project[]>([]);
     const [activeProject, setActiveProject] = useState<Project | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [environment, setEnvironment] = useState<Environment>('LIVE');
 
     const fetchProjects = async () => {
+        const token = localStorage.getItem('token');
         if (!token) return;
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_URL}/user/projects`, {
@@ -79,10 +80,11 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
             setProjects([]);
             setActiveProject(null);
         }
-    }, [user, token]);
+    }, [user]);
 
     const createProject = async (name: string) => {
         try {
+            const token = localStorage.getItem('token');
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/projects`,
                 { name },
@@ -98,6 +100,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const deleteProject = async (id: string) => {
         try {
+            const token = localStorage.getItem('token');
             await axios.delete(`${import.meta.env.VITE_API_URL}/projects/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { websocketService } from '../../services/websocket';
 import Toast from '../../components/Toast';
-import { useAuth } from '../../context/AuthContext';
 import { useProjects } from '../../context/ProjectContext';
 
 interface Analytics {
@@ -30,7 +29,6 @@ interface ApiUsage {
 }
 
 export default function Overview() {
-    const { token } = useAuth();
     const { activeProject, environment } = useProjects();
     const [analytics, setAnalytics] = useState<Analytics | null>(null);
     const [apiUsage, setApiUsage] = useState<ApiUsage | null>(null);
@@ -66,6 +64,7 @@ export default function Overview() {
     }, [activeProject, environment]); // Refetch when activeProject or environment changes
 
     const fetchData = async () => {
+        const token = localStorage.getItem('token');
         if (!token) return;
         try {
             setLoading(true);
