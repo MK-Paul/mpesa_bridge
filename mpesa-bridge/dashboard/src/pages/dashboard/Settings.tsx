@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
 import { User, Lock, Webhook, Save, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import axios from 'axios';
 
 export default function Settings() {
     const { user } = useAuth();
@@ -9,8 +10,8 @@ export default function Settings() {
     const [saved, setSaved] = useState(false);
 
     // Profile state
-    const [name, setName] = useState(user?.name || '');
-    const [email, setEmail] = useState(user?.email || '');
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
 
     // Password state
     const [currentPassword, setCurrentPassword] = useState('');
@@ -21,15 +22,48 @@ export default function Settings() {
     const [webhookUrl, setWebhookUrl] = useState('');
     const [webhookSecret, setWebhookSecret] = useState('');
 
+    useEffect(() => {
+        if (user) {
+            setName(user.name);
+            setEmail(user.email);
+        }
+        fetchWebhookConfig();
+    }, [user]);
+
+    const fetchWebhookConfig = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/user/projects`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.data.projects && response.data.projects.length > 0) {
+                const project = response.data.projects[0];
+                setWebhookUrl(project.webhookUrl || '');
+                setWebhookSecret(project.webhookSecret || '');
+            }
+        } catch (error) {
+            console.error('Failed to fetch webhook config:', error);
+        }
+    };
+
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        // API call will go here
-        setTimeout(() => {
-            setLoading(false);
+        try {
+            const token = localStorage.getItem('token');
+            await axios.put(
+                `${import.meta.env.VITE_API_URL}/user/profile`,
+                { name, email },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
             setSaved(true);
             setTimeout(() => setSaved(false), 2000);
-        }, 1000);
+        } catch (error) {
+            console.error('Failed to update profile:', error);
+            alert('Failed to update profile');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleChangePassword = async (e: React.FormEvent) => {
@@ -39,26 +73,44 @@ export default function Settings() {
             return;
         }
         setLoading(true);
-        // API call will go here
-        setTimeout(() => {
-            setLoading(false);
+        try {
+            const token = localStorage.getItem('token');
+            await axios.put(
+                `${import.meta.env.VITE_API_URL}/user/password`,
+                { currentPassword, newPassword },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
             setCurrentPassword('');
             setNewPassword('');
             setConfirmPassword('');
             setSaved(true);
             setTimeout(() => setSaved(false), 2000);
-        }, 1000);
+        } catch (error: any) {
+            console.error('Failed to change password:', error);
+            alert(error.response?.data?.message || 'Failed to change password');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleSaveWebhook = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        // API call will go here
-        setTimeout(() => {
-            setLoading(false);
+        try {
+            const token = localStorage.getItem('token');
+            await axios.put(
+                `${import.meta.env.VITE_API_URL}/user/webhook`,
+                { webhookUrl, webhookSecret },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
             setSaved(true);
             setTimeout(() => setSaved(false), 2000);
-        }, 1000);
+        } catch (error) {
+            console.error('Failed to update webhook:', error);
+            alert('Failed to update webhook configuration');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (

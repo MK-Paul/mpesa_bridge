@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
-import { Search, Download, Filter, CheckCircle2, XCircle, Clock, ExternalLink } from 'lucide-react';
-import { useState } from 'react';
+import { Search, Download, Filter, CheckCircle2, XCircle, Clock, ExternalLink, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 interface Transaction {
     id: string;
@@ -9,17 +10,34 @@ interface Transaction {
     status: 'COMPLETED' | 'PENDING' | 'FAILED';
     mpesaReceipt?: string;
     createdAt: string;
-    failureReason?: string;
 }
 
 export default function Transactions() {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('ALL');
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    // Mock data - will be replaced with real API data
-    const transactions: Transaction[] = [
-        // Empty for now - will be populated from API
-    ];
+    useEffect(() => {
+        fetchTransactions();
+    }, [statusFilter]);
+
+    const fetchTransactions = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('token');
+            const status = statusFilter !== 'ALL' ? statusFilter : '';
+            const response = await axios.get(
+                `${import.meta.env.VITE_API_URL}/user/transactions?status=${status}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            setTransactions(response.data.transactions || []);
+        } catch (error) {
+            console.error('Failed to fetch transactions:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -49,11 +67,18 @@ export default function Transactions() {
 
     const filteredTransactions = transactions.filter(tx => {
         const matchesSearch = tx.phoneNumber.includes(searchQuery) ||
-            tx.id.includes(searchQuery) ||
-            (tx.mpesaReceipt && tx.mpesaReceipt.includes(searchQuery));
-        const matchesStatus = statusFilter === 'ALL' || tx.status === statusFilter;
-        return matchesSearch && matchesStatus;
+            tx.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (tx.mpesaReceipt && tx.mpesaReceipt.toLowerCase().includes(searchQuery.toLowerCase()));
+        return matchesSearch;
     });
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">

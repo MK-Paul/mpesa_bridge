@@ -1,14 +1,42 @@
 import { motion } from 'framer-motion';
-import { Key, Copy, Check, Eye, EyeOff, RefreshCw, AlertTriangle } from 'lucide-react';
-import { useState } from 'react';
+import { Key, Copy, Check, Eye, EyeOff, RefreshCw, AlertTriangle, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+
+interface Project {
+    id: string;
+    name: string;
+    publicKey: string;
+    secretKey: string;
+    createdAt: string;
+}
 
 export default function APIKeys() {
     const [showSecretKey, setShowSecretKey] = useState(false);
     const [copiedKey, setCopiedKey] = useState<string>('');
+    const [project, setProject] = useState<Project | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [regenerating, setRegenerating] = useState(false);
 
-    // Mock data - will be replaced with real API data
-    const publicKey = 'pk_live_1234567890abcdef1234567890abcdef';
-    const secretKey = 'sk_live_abcdef1234567890abcdef1234567890';
+    useEffect(() => {
+        fetchProject();
+    }, []);
+
+    const fetchProject = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/user/projects`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.data.projects && response.data.projects.length > 0) {
+                setProject(response.data.projects[0]);
+            }
+        } catch (error) {
+            console.error('Failed to fetch project:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const copyToClipboard = (text: string, keyType: string) => {
         navigator.clipboard.writeText(text);
@@ -16,10 +44,48 @@ export default function APIKeys() {
         setTimeout(() => setCopiedKey(''), 2000);
     };
 
-    const handleRegenerateKeys = () => {
-        // Will be implemented with API call
-        alert('This will regenerate your keys. Your old keys will stop working immediately.');
+    const handleRegenerateKeys = async () => {
+        if (!project) return;
+
+        const confirmed = window.confirm(
+            'Are you sure? This will regenerate your keys. Your old keys will stop working immediately!'
+        );
+
+        if (!confirmed) return;
+
+        try {
+            setRegenerating(true);
+            const token = localStorage.getItem('token');
+            const response = await axios.put(
+                `${import.meta.env.VITE_API_URL}/user/projects/${project.id}/regenerate`,
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            setProject(response.data.project);
+            alert('Keys regenerated successfully!');
+        } catch (error) {
+            console.error('Failed to regenerate keys:', error);
+            alert('Failed to regenerate keys. Please try again.');
+        } finally {
+            setRegenerating(false);
+        }
     };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    if (!project) {
+        return (
+            <div className="text-center py-12">
+                <p className="text-slate-400">No project found. Please contact support.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -67,10 +133,10 @@ export default function APIKeys() {
 
                 <div className="flex items-center gap-2">
                     <div className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 font-mono text-sm text-white overflow-x-auto">
-                        {publicKey}
+                        {project.publicKey}
                     </div>
                     <button
-                        onClick={() => copyToClipboard(publicKey, 'public')}
+                        onClick={() => copyToClipboard(project.publicKey, 'public')}
                         className="px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
                         title="Copy to clipboard"
                     >
@@ -102,7 +168,7 @@ export default function APIKeys() {
 
                 <div className="flex items-center gap-2">
                     <div className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 font-mono text-sm text-white overflow-x-auto">
-                        {showSecretKey ? secretKey : '••••••••••••••••••••••••••••••••'}
+                        {showSecretKey ? project.secretKey : '••••••••••••••••••••••••••••••••••••••••••••••••'}
                     </div>
                     <button
                         onClick={() => setShowSecretKey(!showSecretKey)}
@@ -116,7 +182,7 @@ export default function APIKeys() {
                         )}
                     </button>
                     <button
-                        onClick={() => copyToClipboard(secretKey, 'secret')}
+                        onClick={() => copyToClipboard(project.secretKey, 'secret')}
                         className="px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
                         title="Copy to clipboard"
                     >
@@ -148,7 +214,7 @@ export default function APIKeys() {
                             {`import { MpesaBridge } from 'mpesa-bridge-sdk';
 
 const mpesa = new MpesaBridge({
-  apiKey: '${publicKey}'
+  apiKey: '${project.publicKey}'
 });`}
                         </pre>
                     </div>
@@ -191,10 +257,15 @@ const mpesa = new MpesaBridge({
                     </div>
                     <button
                         onClick={handleRegenerateKeys}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium transition-all"
+                        disabled={regenerating}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium transition-all disabled:opacity-50"
                     >
-                        <RefreshCw size={18} />
-                        Regenerate
+                        {regenerating ? (
+                            <Loader2 size={18} className="animate-spin" />
+                        ) : (
+                            <RefreshCw size={18} />
+                        )}
+                        {regenerating ? 'Regenerating...' : 'Regenerate'}
                     </button>
                 </div>
             </motion.div>
