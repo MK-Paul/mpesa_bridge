@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Shield, Zap, Globe, Code, Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import Footer from '../components/Footer';
 
 export default function LandingPage() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -23,9 +24,9 @@ export default function LandingPage() {
 
                     {/* Desktop Navigation (Center) */}
                     <div className="hidden md:flex items-center gap-8">
-                        <a href="#features" className="text-sm text-slate-400 hover:text-white transition-colors">Features</a>
+                        <Link to="/features" className="text-sm text-slate-400 hover:text-white transition-colors">Features</Link>
                         <Link to="/docs" className="text-sm text-slate-400 hover:text-white transition-colors">Documentation</Link>
-                        <a href="#pricing" className="text-sm text-slate-400 hover:text-white transition-colors">Pricing</a>
+                        <Link to="/pricing" className="text-sm text-slate-400 hover:text-white transition-colors">Pricing</Link>
                     </div>
 
                     {/* Desktop Actions (Right) */}
@@ -201,18 +202,7 @@ await mpesa.pay({
             </section>
 
             {/* Footer */}
-            <footer className="py-12 px-6 border-t border-white/5">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-                    <p className="text-slate-500 text-sm">
-                        © 2025 M-Pesa Bridge. All rights reserved.
-                    </p>
-                    <div className="flex gap-6">
-                        <a href="#" className="text-slate-500 hover:text-white transition-colors">Terms</a>
-                        <a href="#" className="text-slate-500 hover:text-white transition-colors">Privacy</a>
-                        <a href="#" className="text-slate-500 hover:text-white transition-colors">Contact</a>
-                    </div>
-                </div>
-            </footer>
+            <Footer />
         </div>
     );
 }

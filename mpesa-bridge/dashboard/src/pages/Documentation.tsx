@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ArrowLeft, Book, Code, Smartphone, Globe, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Book, Code, Smartphone, Globe, Copy, Check, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 
@@ -155,6 +155,23 @@ const handlePay = async () => {
     Alert.alert('Error', error.message);
   }
 };`} />
+                        </section>
+
+                        <section id="webhooks" className="mb-16">
+                            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                                <Activity size={24} className="text-purple-500" /> Webhooks & Real-time
+                            </h2>
+                            <p className="text-slate-400 mb-4">
+                                M-Pesa Bridge handles the complex XML callbacks from Safaricom for you.
+                                Instead of setting up your own public server to receive callbacks, you simply
+                                subscribe to real-time events using our SDK.
+                            </p>
+                            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-6">
+                                <p className="text-blue-200 text-sm">
+                                    <strong>Note:</strong> Traditional HTTP Webhooks (Server-to-Server) are coming soon.
+                                    For now, use the <code>subscribeToUpdates</code> method for real-time confirmation.
+                                </p>
+                            </div>
                         </section>
 
                     </motion.div>
