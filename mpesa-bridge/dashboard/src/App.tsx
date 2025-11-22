@@ -11,6 +11,7 @@ import DashboardLayout from './layouts/DashboardLayout';
 import Overview from './pages/dashboard/Overview';
 import Transactions from './pages/dashboard/Transactions';
 import APIKeys from './pages/dashboard/APIKeys';
+import Settings from './pages/dashboard/Settings';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
               <Route path="/dashboard" element={<Overview />} />
               <Route path="/dashboard/transactions" element={<Transactions />} />
               <Route path="/dashboard/keys" element={<APIKeys />} />
+              <Route path="/dashboard/settings" element={<Settings />} />
             </Route>
           </Route>
 
