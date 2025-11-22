@@ -13,7 +13,7 @@ export const analyticsMiddleware = async (req: Request, res: Response, next: Nex
     // @ts-ignore
     res.end = function (chunk: any, encoding: any) {
         const duration = Date.now() - start;
-        const userId = (req as any).user?.userId; // Assuming auth middleware attaches user
+        const userId = (req as any).userId || (req as any).user?.userId;
 
         // Only log if user is authenticated and it's an API request
         if (userId && req.path.startsWith('/api')) {

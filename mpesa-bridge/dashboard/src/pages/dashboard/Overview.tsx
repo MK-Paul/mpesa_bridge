@@ -317,7 +317,8 @@ export default function Overview() {
                                     <p className="font-semibold text-white">KES {tx.amount.toLocaleString()}</p>
                                     <span className={`text-xs px-2 py-1 rounded-full ${tx.status === 'COMPLETED' ? 'bg-green-500/20 text-green-400' :
                                         tx.status === 'PENDING' ? 'bg-yellow-500/20 text-yellow-400' :
-                                            'bg-red-500/20 text-red-400'
+                                            tx.status === 'CANCELLED' ? 'bg-orange-500/20 text-orange-400' :
+                                                'bg-red-500/20 text-red-400'
                                         }`}>
                                         {tx.status}
                                     </span>

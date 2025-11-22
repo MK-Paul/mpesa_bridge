@@ -51,11 +51,24 @@ export class TransactionController {
                 });
 
                 // Simulate Callback (Async)
-                // Determine success/failure based on amount (e.g., amount ending in 1 fails)
-                const shouldFail = amount.toString().endsWith('1');
-                const status = shouldFail ? 'FAILED' : 'COMPLETED';
-                const failureReason = shouldFail ? 'Simulated Failure: Insufficient Funds' : null;
-                const mpesaReceipt = shouldFail ? null : `SB${crypto.randomBytes(8).toString('hex').toUpperCase()}`;
+                // Determine success/failure based on amount
+                // Ends in 1 -> FAILED (Insufficient Funds)
+                // Ends in 2 -> CANCELLED (User Cancelled)
+                // Else -> COMPLETED
+                const amountStr = amount.toString();
+                let status = 'COMPLETED';
+                let failureReason = null;
+                let mpesaReceipt = `SB${crypto.randomBytes(8).toString('hex').toUpperCase()}`;
+
+                if (amountStr.endsWith('1')) {
+                    status = 'FAILED';
+                    failureReason = 'Simulated Failure: Insufficient Funds';
+                    mpesaReceipt = null;
+                } else if (amountStr.endsWith('2')) {
+                    status = 'CANCELLED';
+                    failureReason = 'Simulated: Request Cancelled by User';
+                    mpesaReceipt = null;
+                }
 
                 setTimeout(async () => {
                     try {

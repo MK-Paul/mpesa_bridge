@@ -36,7 +36,7 @@ export class CallbackController {
             }
 
             // 2. Determine Status
-            let status: 'COMPLETED' | 'FAILED' = 'FAILED';
+            let status: 'COMPLETED' | 'FAILED' | 'CANCELLED' = 'FAILED';
             let receipt = null;
 
             if (ResultCode === 0) {
@@ -44,6 +44,8 @@ export class CallbackController {
                 // Extract Receipt Number (Item 1 usually holds the receipt)
                 const receiptItem = CallbackMetadata?.Item.find((item: any) => item.Name === 'MpesaReceiptNumber');
                 receipt = receiptItem?.Value || null;
+            } else if (ResultCode === 1032) {
+                status = 'CANCELLED';
             }
 
             // 3. Update Database

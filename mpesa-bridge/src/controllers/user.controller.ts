@@ -231,6 +231,12 @@ export class UserController {
                 projectId: { in: targetProjectIds }
             };
 
+            // Filter by environment if provided
+            const environment = req.query.environment as string;
+            if (environment && (environment === 'SANDBOX' || environment === 'LIVE')) {
+                where.environment = environment;
+            }
+
             if (status && status !== 'All') {
                 where.status = status as string;
             }
@@ -325,9 +331,17 @@ export class UserController {
                 targetProjectIds = [requestedProjectId];
             }
 
+            // Filter by environment if provided
+            const environment = req.query.environment as string;
+            const whereClause: any = { projectId: { in: targetProjectIds } };
+
+            if (environment && (environment === 'SANDBOX' || environment === 'LIVE')) {
+                whereClause.environment = environment;
+            }
+
             // Get all transactions
             const transactions = await prisma.transaction.findMany({
-                where: { projectId: { in: targetProjectIds } },
+                where: whereClause,
                 select: {
                     amount: true,
                     status: true,

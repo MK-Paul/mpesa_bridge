@@ -31,12 +31,27 @@ app.use('/api/v1/callbacks', callbackRoutes);
 app.use('/api/v1/projects', projectRoutes);
 
 // Health Check
-app.get('/', (req: Request, res: Response) => {
+// Health Check
+app.get('/health', (req: Request, res: Response) => {
     res.status(200).json({
         status: 'success',
         message: 'M-Pesa Bridge API is running 🚀',
         version: '1.0.0'
     });
+});
+
+// Serve Frontend (SPA)
+import path from 'path';
+const frontendPath = path.join(__dirname, '../dashboard/dist');
+app.use(express.static(frontendPath));
+
+// Handle SPA routing - return index.html for any unknown route
+app.get('*', (req: Request, res: Response) => {
+    // If it's an API request that wasn't handled, let it fall through to error handler
+    if (req.path.startsWith('/api')) {
+        return res.status(404).json({ error: 'API endpoint not found' });
+    }
+    res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
 // Error Handler (must be last)

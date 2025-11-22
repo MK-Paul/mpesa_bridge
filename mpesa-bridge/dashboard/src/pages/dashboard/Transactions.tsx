@@ -46,6 +46,8 @@ export default function Transactions() {
                 return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
             case 'FAILED':
                 return 'bg-red-500/20 text-red-400 border-red-500/30';
+            case 'CANCELLED':
+                return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
             default:
                 return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
         }
@@ -58,6 +60,8 @@ export default function Transactions() {
             case 'PENDING':
                 return <Clock size={16} />;
             case 'FAILED':
+                return <XCircle size={16} />;
+            case 'CANCELLED':
                 return <XCircle size={16} />;
             default:
                 return null;
