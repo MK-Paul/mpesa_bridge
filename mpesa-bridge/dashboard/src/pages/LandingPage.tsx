@@ -1,13 +1,17 @@
-import { motion } from 'framer-motion';
-import { ArrowRight, Shield, Zap, Globe, Code } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, Shield, Zap, Globe, Code, Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function LandingPage() {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
     return (
         <div className="min-h-screen bg-background text-white overflow-hidden">
             {/* Navbar */}
             <nav className="fixed w-full z-50 glass border-b border-white/5">
                 <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+                    {/* Logo */}
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                             <Zap size={20} className="text-white" />
@@ -16,7 +20,16 @@ export default function LandingPage() {
                             M-Pesa Bridge
                         </span>
                     </div>
-                    <div className="flex items-center gap-6">
+
+                    {/* Desktop Navigation (Center) */}
+                    <div className="hidden md:flex items-center gap-8">
+                        <a href="#features" className="text-sm text-slate-400 hover:text-white transition-colors">Features</a>
+                        <Link to="/docs" className="text-sm text-slate-400 hover:text-white transition-colors">Documentation</Link>
+                        <a href="#pricing" className="text-sm text-slate-400 hover:text-white transition-colors">Pricing</a>
+                    </div>
+
+                    {/* Desktop Actions (Right) */}
+                    <div className="hidden md:flex items-center gap-6">
                         <Link to="/login" className="text-sm text-slate-400 hover:text-white transition-colors">
                             Sign In
                         </Link>
@@ -27,7 +40,36 @@ export default function LandingPage() {
                             Get Started
                         </Link>
                     </div>
+
+                    {/* Mobile Menu Button */}
+                    <button
+                        className="md:hidden text-white p-2"
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    >
+                        {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                    </button>
                 </div>
+
+                {/* Mobile Menu Overlay */}
+                <AnimatePresence>
+                    {isMenuOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="md:hidden bg-surface border-b border-white/10 overflow-hidden"
+                        >
+                            <div className="px-6 py-8 flex flex-col gap-6">
+                                <a href="#features" className="text-slate-400 hover:text-white transition-colors" onClick={() => setIsMenuOpen(false)}>Features</a>
+                                <Link to="/docs" className="text-slate-400 hover:text-white transition-colors" onClick={() => setIsMenuOpen(false)}>Documentation</Link>
+                                <a href="#pricing" className="text-slate-400 hover:text-white transition-colors" onClick={() => setIsMenuOpen(false)}>Pricing</a>
+                                <div className="h-px bg-white/10 my-2" />
+                                <Link to="/login" className="text-slate-400 hover:text-white transition-colors" onClick={() => setIsMenuOpen(false)}>Sign In</Link>
+                                <Link to="/register" className="text-primary font-medium" onClick={() => setIsMenuOpen(false)}>Get Started</Link>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </nav>
 
             {/* Hero Section */}
