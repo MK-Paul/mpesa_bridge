@@ -120,6 +120,12 @@ export class AuthController {
                 return;
             }
 
+            // Check if user is banned
+            if (user.status === 'BANNED') {
+                res.status(403).json({ message: 'Your account has been banned. Please contact support.' });
+                return;
+            }
+
             // Generate JWT
             const token = jwt.sign(
                 { userId: user.id, email: user.email },
@@ -133,7 +139,9 @@ export class AuthController {
                 user: {
                     id: user.id,
                     email: user.email,
-                    name: user.name
+                    name: user.name,
+                    role: user.role,
+                    status: user.status
                 }
             });
 

@@ -32,7 +32,13 @@ export default function Login() {
         try {
             const response = await authService.login(email, password);
             login(response.token, response.user);
-            navigate('/dashboard');
+
+            // Redirect based on role
+            if (response.user.role === 'ADMIN') {
+                navigate('/admin');
+            } else {
+                navigate('/dashboard');
+            }
         } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to login. Please check your credentials.');
         } finally {
