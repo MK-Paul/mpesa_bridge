@@ -17,6 +17,17 @@ router.post(
     checkValidation,
     TransactionController.initiate
 );
+
+// Alias for /initiate - used by frontend test payment
+router.post(
+    '/stk-push',
+    transactionLimiter,
+    sanitizePhoneNumber,
+    validateTransactionInit,
+    checkValidation,
+    TransactionController.initiate
+);
+
 router.get('/status/:id', TransactionController.getStatus);
 
 export default router;
