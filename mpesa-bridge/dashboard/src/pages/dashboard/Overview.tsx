@@ -2,6 +2,8 @@ import { motion } from 'framer-motion';
 import { DollarSign, TrendingUp, Activity, CheckCircle2, ArrowUpRight, ArrowDownRight, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { websocketService } from '../../services/websocket';
+import Toast from '../../components/Toast';
 
 interface Analytics {
     totalRevenue: number;
@@ -23,9 +25,30 @@ export default function Overview() {
     const [analytics, setAnalytics] = useState<Analytics | null>(null);
     const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
     useEffect(() => {
         fetchData();
+
+        // Connect to WebSocket
+        websocketService.connect();
+
+        // Listen for transaction updates
+        const handleTransactionUpdate = (data: any) => {
+            console.log('Transaction update received:', data);
+            setToast({
+                message: `Transaction ${data.status}: KES ${data.amount}`,
+                type: data.status === 'COMPLETED' ? 'success' : data.status === 'FAILED' ? 'error' : 'info'
+            });
+            // Refresh data
+            fetchData();
+        };
+
+        websocketService.on('transaction-updated', handleTransactionUpdate);
+
+        return () => {
+            websocketService.off('transaction-updated', handleTransactionUpdate);
+        };
     }, []);
 
     const fetchData = async () => {
@@ -159,8 +182,8 @@ export default function Overview() {
                                 <div className="text-right">
                                     <p className="font-semibold text-white">KES {tx.amount.toLocaleString()}</p>
                                     <span className={`text-xs px-2 py-1 rounded-full ${tx.status === 'COMPLETED' ? 'bg-green-500/20 text-green-400' :
-                                            tx.status === 'PENDING' ? 'bg-yellow-500/20 text-yellow-400' :
-                                                'bg-red-500/20 text-red-400'
+                                        tx.status === 'PENDING' ? 'bg-yellow-500/20 text-yellow-400' :
+                                            'bg-red-500/20 text-red-400'
                                         }`}>
                                         {tx.status}
                                     </span>
@@ -194,6 +217,15 @@ export default function Overview() {
                     </div>
                 </div>
             </motion.div>
+
+            {/* Toast Notification */}
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
         </div>
     );
 }

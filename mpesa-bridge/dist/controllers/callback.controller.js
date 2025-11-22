@@ -51,8 +51,9 @@ class CallbackController {
                         failureReason: ResultCode !== 0 ? ResultDesc : null
                     }
                 });
-                // 4. Emit Socket Event (Real-time update to web clients)
+                // 4. Emit Socket Events (Real-time update to web clients)
                 const io = (0, socket_1.getIo)();
+                // Specific transaction event
                 io.emit(`transaction:${transaction.id}`, {
                     transactionId: transaction.id,
                     status: updatedTransaction.status,
@@ -60,7 +61,16 @@ class CallbackController {
                     amount: updatedTransaction.amount,
                     updatedAt: updatedTransaction.updatedAt
                 });
-                console.log(`✅ Transaction ${transaction.id} updated to ${status} - WebSocket event emitted`);
+                // Generic transaction-updated event for dashboard
+                io.emit('transaction-updated', {
+                    transactionId: transaction.id,
+                    status: updatedTransaction.status,
+                    mpesaReceipt: updatedTransaction.mpesaReceipt,
+                    amount: updatedTransaction.amount,
+                    phoneNumber: updatedTransaction.phoneNumber,
+                    updatedAt: updatedTransaction.updatedAt
+                });
+                console.log(`✅ Transaction ${transaction.id} updated to ${status} - WebSocket events emitted`);
                 res.status(200).json({ message: 'Callback processed successfully' });
             }
             catch (error) {

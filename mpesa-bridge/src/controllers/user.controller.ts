@@ -270,12 +270,12 @@ export class UserController {
 
     /**
      * Get user's transactions with filters
-     * GET /api/v1/user/transactions?status=&search=&limit=
+     * GET /api/v1/user/transactions?status=&search=&limit=&format=csv
      */
     static async getTransactions(req: AuthRequest, res: Response): Promise<void> {
         try {
             const userId = req.userId;
-            const { status, search, limit } = req.query;
+            const { status, search, limit, format } = req.query;
 
             if (!userId) {
                 res.status(401).json({ message: 'Unauthorized' });
@@ -291,6 +291,12 @@ export class UserController {
             const projectIds = projects.map(p => p.id);
 
             if (projectIds.length === 0) {
+                if (format === 'csv') {
+                    res.setHeader('Content-Type', 'text/csv');
+                    res.setHeader('Content-Disposition', 'attachment; filename=transactions.csv');
+                    res.send('ID,Phone Number,Amount,Status,M-Pesa Receipt,Date\n');
+                    return;
+                }
                 res.status(200).json({ transactions: [] });
                 return;
             }
@@ -326,6 +332,20 @@ export class UserController {
                     updatedAt: true
                 }
             });
+
+            // Return CSV format if requested
+            if (format === 'csv') {
+                const csvHeader = 'ID,Phone Number,Amount,Status,M-Pesa Receipt,Date\n';
+                const csvRows = transactions.map(tx => {
+                    const date = new Date(tx.createdAt).toLocaleString('en-GB');
+                    return `${tx.id},"${tx.phoneNumber}",${tx.amount},${tx.status},"${tx.mpesaReceipt || ''}","${date}"`;
+                }).join('\n');
+
+                res.setHeader('Content-Type', 'text/csv');
+                res.setHeader('Content-Disposition', 'attachment; filename=transactions.csv');
+                res.send(csvHeader + csvRows);
+                return;
+            }
 
             res.status(200).json({ transactions });
         } catch (error) {

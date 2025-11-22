@@ -187,5 +187,97 @@ class AuthController {
             }
         });
     }
+    /**
+     * Request password reset
+     * POST /api/v1/auth/forgot-password
+     */
+    static forgotPassword(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { email } = req.body;
+                if (!email) {
+                    res.status(400).json({ message: 'Email is required' });
+                    return;
+                }
+                // Find user
+                const user = yield prisma.user.findUnique({
+                    where: { email }
+                });
+                // For security, always return success even if user doesn't exist
+                if (!user) {
+                    res.status(200).json({ message: 'If the email exists, a reset link has been sent' });
+                    return;
+                }
+                // Generate reset token (valid for 1 hour)
+                const jwtSecret = process.env.JWT_SECRET;
+                if (!jwtSecret) {
+                    throw new Error('JWT_SECRET not configured');
+                }
+                const resetToken = jsonwebtoken_1.default.sign({ userId: user.id, type: 'password-reset' }, jwtSecret, { expiresIn: '1h' });
+                // TODO: Send email with reset link
+                // For now, just log the token (in production, send email)
+                console.log(`📧 Password reset link for ${email}:`);
+                console.log(`http://localhost:5173/reset-password?token=${resetToken}`);
+                res.status(200).json({
+                    message: 'If the email exists, a reset link has been sent',
+                    // Remove this in production - only for testing
+                    resetToken
+                });
+            }
+            catch (error) {
+                console.error('Forgot password error:', error);
+                res.status(500).json({ message: 'Internal server error' });
+            }
+        });
+    }
+    /**
+     * Reset password with token
+     * POST /api/v1/auth/reset-password
+     */
+    static resetPassword(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { token, newPassword } = req.body;
+                if (!token || !newPassword) {
+                    res.status(400).json({ message: 'Token and new password are required' });
+                    return;
+                }
+                if (newPassword.length < 6) {
+                    res.status(400).json({ message: 'Password must be at least 6 characters' });
+                    return;
+                }
+                // Verify token
+                const jwtSecret = process.env.JWT_SECRET;
+                if (!jwtSecret) {
+                    throw new Error('JWT_SECRET not configured');
+                }
+                let decoded;
+                try {
+                    decoded = jsonwebtoken_1.default.verify(token, jwtSecret);
+                }
+                catch (err) {
+                    res.status(400).json({ message: 'Invalid or expired reset token' });
+                    return;
+                }
+                // Check if it's a password reset token
+                if (decoded.type !== 'password-reset') {
+                    res.status(400).json({ message: 'Invalid token type' });
+                    return;
+                }
+                // Hash new password
+                const hashedPassword = yield bcrypt_1.default.hash(newPassword, 10);
+                // Update password
+                yield prisma.user.update({
+                    where: { id: decoded.userId },
+                    data: { password: hashedPassword }
+                });
+                res.status(200).json({ message: 'Password reset successful' });
+            }
+            catch (error) {
+                console.error('Reset password error:', error);
+                res.status(500).json({ message: 'Internal server error' });
+            }
+        });
+    }
 }
 exports.AuthController = AuthController;

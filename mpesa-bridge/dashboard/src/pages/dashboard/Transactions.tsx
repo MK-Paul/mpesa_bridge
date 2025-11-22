@@ -72,6 +72,32 @@ export default function Transactions() {
         return matchesSearch;
     });
 
+    const handleExport = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const status = statusFilter !== 'ALL' ? statusFilter : '';
+            const response = await axios.get(
+                `${import.meta.env.VITE_API_URL}/user/transactions?status=${status}&format=csv`,
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                    responseType: 'blob'
+                }
+            );
+
+            // Create download link
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `transactions-${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.error('Export failed:', error);
+            alert('Failed to export transactions');
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -87,7 +113,10 @@ export default function Transactions() {
                     <h2 className="text-3xl font-bold mb-2">Transactions</h2>
                     <p className="text-slate-400">View and manage all your M-Pesa transactions</p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-medium transition-all">
+                <button
+                    onClick={handleExport}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-medium transition-all"
+                >
                     <Download size={18} />
                     Export
                 </button>
