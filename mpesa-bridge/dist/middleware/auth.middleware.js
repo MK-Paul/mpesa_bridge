@@ -1,34 +1,29 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-
-export interface AuthRequest extends Request {
-    userId?: string;
-}
-
-export const authenticateToken = (
-    req: AuthRequest,
-    res: Response,
-    next: NextFunction
-): void => {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.authenticateToken = void 0;
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-
     if (!token) {
         res.status(401).json({ message: 'Access token required' });
         return;
     }
-
     try {
         const jwtSecret = process.env.JWT_SECRET;
         if (!jwtSecret) {
             throw new Error('JWT_SECRET not configured');
         }
-
-        const decoded = jwt.verify(token, jwtSecret) as { userId: string };
+        const decoded = jsonwebtoken_1.default.verify(token, jwtSecret);
         req.userId = decoded.userId;
         next();
-    } catch (error) {
+    }
+    catch (error) {
         res.status(403).json({ message: 'Invalid or expired token' });
         return;
     }
 };
+exports.authenticateToken = authenticateToken;

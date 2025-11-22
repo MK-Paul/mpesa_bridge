@@ -9,6 +9,7 @@ app.set('trust proxy', 1);
 import transactionRoutes from './routes/transaction.routes';
 import callbackRoutes from './routes/callback.routes';
 import projectRoutes from './routes/project.routes';
+import authRoutes from './routes/auth.routes';
 import { apiLimiter } from './middleware/rateLimiter.middleware';
 import { errorHandler } from './middleware/errorHandler.middleware';
 
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use(apiLimiter); // Apply general rate limiter to all routes
 
 // Routes
+app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/transactions', transactionRoutes);
 app.use('/api/v1/callbacks', callbackRoutes);
 app.use('/api/v1/projects', projectRoutes);
