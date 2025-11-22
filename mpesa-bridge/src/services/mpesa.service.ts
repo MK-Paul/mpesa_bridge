@@ -14,6 +14,11 @@ export class MpesaService {
             `${config.mpesa.consumerKey}:${config.mpesa.consumerSecret}`
         ).toString('base64');
 
+        console.log('🔐 M-Pesa Auth Request:');
+        console.log('  URL:', `${this.baseUrl}/oauth/v1/generate?grant_type=client_credentials`);
+        console.log('  Consumer Key:', config.mpesa.consumerKey?.substring(0, 10) + '...');
+        console.log('  Environment:', config.env);
+
         try {
             const response = await axios.get(
                 `${this.baseUrl}/oauth/v1/generate?grant_type=client_credentials`,
@@ -23,9 +28,15 @@ export class MpesaService {
                     },
                 }
             );
+            console.log('✅ M-Pesa Auth Success!');
             return response.data.access_token;
         } catch (error: any) {
-            console.error('M-Pesa Auth Error:', error.response?.data || error.message);
+            console.error('❌ M-Pesa Auth Failed!');
+            console.error('  Status Code:', error.response?.status);
+            console.error('  Status Text:', error.response?.statusText);
+            console.error('  Error Data:', JSON.stringify(error.response?.data, null, 2));
+            console.error('  Request URL:', error.config?.url);
+            console.error('  Full Error:', error.message);
             throw new Error('Failed to authenticate with M-Pesa');
         }
     }
