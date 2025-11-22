@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
-import { DollarSign, TrendingUp, Activity, CheckCircle2, ArrowUpRight, ArrowDownRight, Loader2 } from 'lucide-react';
+import { DollarSign, TrendingUp, Activity, CheckCircle2, ArrowUpRight, ArrowDownRight, Loader2, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { websocketService } from '../../services/websocket';
 import Toast from '../../components/Toast';
@@ -35,6 +36,9 @@ export default function Overview() {
     const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+    const [showTestModal, setShowTestModal] = useState(false);
+    const [testForm, setTestForm] = useState({ amount: '100', phoneNumber: '254712345678', description: 'Test payment' });
+    const [testLoading, setTestLoading] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -89,6 +93,45 @@ export default function Overview() {
             console.error('Failed to fetch overview data:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleTestPayment = async () => {
+        if (!activeProject) {
+            setToast({ message: 'Please select a project first', type: 'error' });
+            return;
+        }
+
+        try {
+            setTestLoading(true);
+            const token = localStorage.getItem('token');
+            const keys = activeProject[environment === 'SANDBOX' ? 'testPublicKey' : 'publicKey'];
+
+            await axios.post(
+                `${import.meta.env.VITE_API_URL}/transactions/stk-push`,
+                {
+                    amount: parseFloat(testForm.amount),
+                    phoneNumber: testForm.phoneNumber,
+                    description: testForm.description
+                },
+                {
+                    headers: {
+                        'x-api-key': keys,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            setToast({ message: 'Test payment initiated successfully!', type: 'success' });
+            setShowTestModal(false);
+            setTimeout(() => fetchData(), 2000); // Refresh after 2 seconds
+        } catch (error: any) {
+            setToast({
+                message: error.response?.data?.message || 'Failed to initiate test payment',
+                type: 'error'
+            });
+        } finally {
+            setTestLoading(false);
         }
     };
 
@@ -295,20 +338,100 @@ export default function Overview() {
             >
                 <h3 className="text-xl font-bold mb-4">Quick Start</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <a href="/docs" className="p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer">
+                    <Link to="/docs" className="p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer">
                         <h4 className="font-semibold mb-1">📚 View Documentation</h4>
                         <p className="text-sm text-slate-400">Learn how to integrate M-Pesa</p>
-                    </a>
-                    <a href="/dashboard/keys" className="p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer">
+                    </Link>
+                    <Link to="/dashboard/keys" className="p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer">
                         <h4 className="font-semibold mb-1">🔑 Get API Keys</h4>
                         <p className="text-sm text-slate-400">Access your API credentials</p>
-                    </a>
-                    <div className="p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer">
+                    </Link>
+                    <button
+                        onClick={() => setShowTestModal(true)}
+                        className="p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer text-left w-full"
+                    >
                         <h4 className="font-semibold mb-1">⚡ Test Payment</h4>
                         <p className="text-sm text-slate-400">Try a test transaction</p>
-                    </div>
+                    </button>
                 </div>
             </motion.div>
+
+            {/* Test Payment Modal */}
+            {showTestModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="glass rounded-2xl p-6 border border-white/10 w-full max-w-md"
+                    >
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold">Test Payment</h3>
+                            <button
+                                onClick={() => setShowTestModal(false)}
+                                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Amount (KES)</label>
+                                <input
+                                    type="number"
+                                    value={testForm.amount}
+                                    onChange={(e) => setTestForm({ ...testForm, amount: e.target.value })}
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Phone Number</label>
+                                <input
+                                    type="tel"
+                                    value={testForm.phoneNumber}
+                                    onChange={(e) => setTestForm({ ...testForm, phoneNumber: e.target.value })}
+                                    placeholder="254712345678"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Description</label>
+                                <input
+                                    type="text"
+                                    value={testForm.description}
+                                    onChange={(e) => setTestForm({ ...testForm, description: e.target.value })}
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                />
+                            </div>
+
+                            {environment === 'SANDBOX' && (
+                                <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-3">
+                                    <p className="text-sm text-orange-400">
+                                        🧪 Sandbox mode: Payment will be simulated
+                                    </p>
+                                </div>
+                            )}
+
+                            <button
+                                onClick={handleTestPayment}
+                                disabled={testLoading}
+                                className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded-xl transition-all disabled:opacity-50"
+                            >
+                                {testLoading ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <Loader2 size={18} className="animate-spin" />
+                                        Processing...
+                                    </span>
+                                ) : (
+                                    'Initiate Payment'
+                                )}
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
 
             {/* Toast Notification */}
             {toast && (
