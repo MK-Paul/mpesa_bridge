@@ -10,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './layouts/DashboardLayout';
 import Overview from './pages/dashboard/Overview';
 import Transactions from './pages/dashboard/Transactions';
+import APIKeys from './pages/dashboard/APIKeys';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<Overview />} />
               <Route path="/dashboard/transactions" element={<Transactions />} />
+              <Route path="/dashboard/keys" element={<APIKeys />} />
             </Route>
           </Route>
 
