@@ -44,8 +44,7 @@ export default function PricingPage() {
 
                             <ul className="space-y-4 text-left mb-8">
                                 {[
-                                    'Unlimited Sandbox Transactions',
-                                    'Up to 1,000 Live Transactions/mo',
+                                    'Unlimited Transactions',
                                     'Real-time Webhooks',
                                     'Community Support',
                                     'Basic Analytics',
