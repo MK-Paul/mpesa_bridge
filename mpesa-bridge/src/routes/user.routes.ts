@@ -14,15 +14,16 @@ router.put('/password', UserController.updatePassword);
 
 // Project routes
 router.get('/projects', UserController.getProjects);
-router.put('/projects/:id/regenerate', UserController.regenerateKeys);
+
 
 // Webhook route
-router.put('/webhook', UserController.updateWebhook);
+
 
 // Transaction routes
 router.get('/transactions', UserController.getTransactions);
 
 // Analytics route
 router.get('/analytics', UserController.getAnalytics);
+router.get('/api-usage', UserController.getApiUsage);
 
 export default router;

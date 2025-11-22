@@ -19,8 +19,14 @@ model User {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   projects Project[]
+  apiCalls ApiCall[]
 
   @@map("users")
+}
+
+enum Environment {
+  LIVE
+  SANDBOX
 }
 
 model Project {
@@ -28,6 +34,8 @@ model Project {
   name        String
   publicKey   String   @unique @map("public_key")
   secretKey   String   @unique @map("secret_key")
+  testPublicKey String? @unique @map("test_public_key")
+  testSecretKey String? @unique @map("test_secret_key")
   callbackUrl String?  @map("callback_url")
   webhookUrl  String?  @map("webhook_url")
   webhookSecret String? @map("webhook_secret")
@@ -49,6 +57,7 @@ model Transaction {
   amount            Float
   phoneNumber       String   @map("phone_number")
   status            String   @default("PENDING")
+  environment       Environment @default(LIVE)
   source            String   @default("DIRECT_API")
   metadata          String?
   mpesaReceipt      String?  @map("mpesa_receipt")
@@ -59,4 +68,16 @@ model Transaction {
   project Project @relation(fields: [projectId], references: [id])
 
   @@map("transactions")
+}
+
+model ApiCall {
+  id        String   @id @default(uuid())
+  userId    String
+  endpoint  String
+  method    String
+  status    Int      @default(200)
+  duration  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
 }

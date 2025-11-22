@@ -8,15 +8,20 @@ import {
     LogOut,
     Zap,
     Menu,
-    X
+    X,
+    TestTube,
+    Globe
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useProjects } from '../context/ProjectContext';
+import { ProjectSwitcher } from '../components/ProjectSwitcher';
 
 export default function DashboardLayout() {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, logout } = useAuth();
+    const { environment, toggleEnvironment } = useProjects();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const menuItems = [
@@ -44,7 +49,11 @@ export default function DashboardLayout() {
                     </Link>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-2">
+                <div className="px-4 pt-4">
+                    <ProjectSwitcher />
+                </div>
+
+                <nav className="flex-1 px-4 pb-4 space-y-2 overflow-y-auto">
                     {menuItems.map((item) => {
                         const isActive = location.pathname === item.path;
                         const Icon = item.icon;
@@ -53,8 +62,8 @@ export default function DashboardLayout() {
                                 key={item.path}
                                 to={item.path}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
-                                        ? 'bg-primary text-white'
-                                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                                    ? 'bg-primary text-white'
+                                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
                                     }`}
                             >
                                 <Icon size={20} />
@@ -90,13 +99,39 @@ export default function DashboardLayout() {
                             <h1 className="text-xl font-bold">Dashboard</h1>
                         </div>
 
-                        <div className="flex items-center gap-4">
-                            <div className="text-right hidden sm:block">
-                                <p className="text-sm font-medium">{user?.name}</p>
-                                <p className="text-xs text-slate-400">{user?.email}</p>
+                        <div className="flex items-center gap-6">
+                            {/* Environment Toggle */}
+                            <div className="flex items-center gap-2 bg-white/5 rounded-full p-1 border border-white/10">
+                                <button
+                                    onClick={() => environment === 'SANDBOX' && toggleEnvironment()}
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${environment === 'LIVE'
+                                        ? 'bg-green-500/20 text-green-400 shadow-lg shadow-green-500/10'
+                                        : 'text-slate-400 hover:text-white'
+                                        }`}
+                                >
+                                    <Globe size={14} />
+                                    Live
+                                </button>
+                                <button
+                                    onClick={() => environment === 'LIVE' && toggleEnvironment()}
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${environment === 'SANDBOX'
+                                        ? 'bg-orange-500/20 text-orange-400 shadow-lg shadow-orange-500/10'
+                                        : 'text-slate-400 hover:text-white'
+                                        }`}
+                                >
+                                    <TestTube size={14} />
+                                    Sandbox
+                                </button>
                             </div>
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                                <span className="font-bold">{user?.name?.charAt(0)}</span>
+
+                            <div className="flex items-center gap-4">
+                                <div className="text-right hidden sm:block">
+                                    <p className="text-sm font-medium">{user?.name}</p>
+                                    <p className="text-xs text-slate-400">{user?.email}</p>
+                                </div>
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                                    <span className="font-bold">{user?.name?.charAt(0)}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -131,8 +166,8 @@ export default function DashboardLayout() {
                                         to={item.path}
                                         onClick={() => setMobileMenuOpen(false)}
                                         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
-                                                ? 'bg-primary text-white'
-                                                : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                                            ? 'bg-primary text-white'
+                                            : 'text-slate-400 hover:bg-white/5 hover:text-white'
                                             }`}
                                     >
                                         <Icon size={20} />

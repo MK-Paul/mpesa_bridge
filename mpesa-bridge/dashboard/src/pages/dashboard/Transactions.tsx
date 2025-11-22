@@ -2,33 +2,32 @@ import { motion } from 'framer-motion';
 import { Search, Download, Filter, CheckCircle2, XCircle, Clock, ExternalLink, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import TransactionDetailsModal from '../../components/TransactionDetailsModal';
+import { useProjects } from '../../context/ProjectContext';
 
-interface Transaction {
-    id: string;
-    amount: number;
-    phoneNumber: string;
-    status: 'COMPLETED' | 'PENDING' | 'FAILED';
-    mpesaReceipt?: string;
-    createdAt: string;
-}
+import type { Transaction } from '../../types';
 
 export default function Transactions() {
+    const { activeProject, environment } = useProjects();
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('ALL');
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
     useEffect(() => {
         fetchTransactions();
-    }, [statusFilter]);
+    }, [statusFilter, activeProject, environment]);
 
     const fetchTransactions = async () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
             const status = statusFilter !== 'ALL' ? statusFilter : '';
+            const projectIdParam = activeProject ? `&projectId=${activeProject.id}` : '';
+            const envParam = `&environment=${environment}`;
             const response = await axios.get(
-                `${import.meta.env.VITE_API_URL}/user/transactions?status=${status}`,
+                `${import.meta.env.VITE_API_URL}/user/transactions?status=${status}${projectIdParam}${envParam}`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             setTransactions(response.data.transactions || []);
@@ -76,8 +75,10 @@ export default function Transactions() {
         try {
             const token = localStorage.getItem('token');
             const status = statusFilter !== 'ALL' ? statusFilter : '';
+            const projectIdParam = activeProject ? `&projectId=${activeProject.id}` : '';
+            const envParam = `&environment=${environment}`;
             const response = await axios.get(
-                `${import.meta.env.VITE_API_URL}/user/transactions?status=${status}&format=csv`,
+                `${import.meta.env.VITE_API_URL}/user/transactions?status=${status}&format=csv${projectIdParam}${envParam}`,
                 {
                     headers: { Authorization: `Bearer ${token}` },
                     responseType: 'blob'
@@ -195,7 +196,7 @@ export default function Transactions() {
                             </thead>
                             <tbody className="divide-y divide-white/5">
                                 {filteredTransactions.map((tx) => (
-                                    <tr key={tx.id} className="hover:bg-white/5 transition-colors">
+                                    <tr key={tx.id} className="hover:bg-white/5 transition-colors cursor-pointer" onClick={() => setSelectedTransaction(tx)}>
                                         <td className="px-6 py-4">
                                             <span className="font-mono text-sm text-slate-300">{tx.id.slice(0, 8)}...</span>
                                         </td>
@@ -230,7 +231,13 @@ export default function Transactions() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <button className="text-primary hover:text-primary/80 transition-colors">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedTransaction(tx);
+                                                }}
+                                                className="text-primary hover:text-primary/80 transition-colors"
+                                            >
                                                 <ExternalLink size={18} />
                                             </button>
                                         </td>
@@ -270,6 +277,11 @@ export default function Transactions() {
                     </div>
                 </motion.div>
             )}
+            {/* Transaction Details Modal */}
+            <TransactionDetailsModal
+                transaction={selectedTransaction}
+                onClose={() => setSelectedTransaction(null)}
+            />
         </div>
     );
 }

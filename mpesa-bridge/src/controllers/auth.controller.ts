@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { emailService } from '../services/email.service';
 
 const prisma = new PrismaClient();
 
@@ -67,24 +68,23 @@ export class AuthController {
             });
 
             // Generate JWT
-            const jwtSecret = process.env.JWT_SECRET;
-            if (!jwtSecret) {
-                throw new Error('JWT_SECRET not configured');
-            }
-
             const token = jwt.sign(
-                { userId: user.id },
-                jwtSecret,
-                { expiresIn: '7d' }
+                { userId: user.id, email: user.email },
+                process.env.JWT_SECRET || 'default_secret',
+                { expiresIn: '24h' }
             );
+
+            // Send welcome email
+            await emailService.sendWelcomeEmail(user.email, user.name);
 
             res.status(201).json({
                 message: 'User registered successfully',
                 token,
                 user
             });
+
         } catch (error) {
-            console.error('Registration error:', error);
+            console.error('Register error:', error);
             res.status(500).json({ message: 'Internal server error' });
         }
     }
@@ -97,7 +97,6 @@ export class AuthController {
         try {
             const { email, password } = req.body;
 
-            // Validation
             if (!email || !password) {
                 res.status(400).json({ message: 'Email and password are required' });
                 return;
@@ -105,49 +104,39 @@ export class AuthController {
 
             // Find user
             const user = await prisma.user.findUnique({
-                where: { email },
-                select: {
-                    id: true,
-                    email: true,
-                    name: true,
-                    password: true,
-                    createdAt: true
-                }
+                where: { email }
             });
 
             if (!user) {
-                res.status(401).json({ message: 'Invalid email or password' });
+                res.status(401).json({ message: 'Invalid credentials' });
                 return;
             }
 
-            // Verify password
+            // Check password
             const isPasswordValid = await bcrypt.compare(password, user.password);
 
             if (!isPasswordValid) {
-                res.status(401).json({ message: 'Invalid email or password' });
+                res.status(401).json({ message: 'Invalid credentials' });
                 return;
             }
 
             // Generate JWT
-            const jwtSecret = process.env.JWT_SECRET;
-            if (!jwtSecret) {
-                throw new Error('JWT_SECRET not configured');
-            }
-
             const token = jwt.sign(
-                { userId: user.id },
-                jwtSecret,
-                { expiresIn: '7d' }
+                { userId: user.id, email: user.email },
+                process.env.JWT_SECRET || 'default_secret',
+                { expiresIn: '24h' }
             );
-
-            // Remove password from response
-            const { password: _, ...userWithoutPassword } = user;
 
             res.status(200).json({
                 message: 'Login successful',
                 token,
-                user: userWithoutPassword
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    name: user.name
+                }
             });
+
         } catch (error) {
             console.error('Login error:', error);
             res.status(500).json({ message: 'Internal server error' });
@@ -155,43 +144,7 @@ export class AuthController {
     }
 
     /**
-     * Get current user profile
-     * GET /api/v1/auth/profile
-     */
-    static async getProfile(req: AuthRequest, res: Response): Promise<void> {
-        try {
-            const userId = req.userId;
-
-            if (!userId) {
-                res.status(401).json({ message: 'Unauthorized' });
-                return;
-            }
-
-            const user = await prisma.user.findUnique({
-                where: { id: userId },
-                select: {
-                    id: true,
-                    email: true,
-                    name: true,
-                    createdAt: true,
-                    updatedAt: true
-                }
-            });
-
-            if (!user) {
-                res.status(404).json({ message: 'User not found' });
-                return;
-            }
-
-            res.status(200).json({ user });
-        } catch (error) {
-            console.error('Get profile error:', error);
-            res.status(500).json({ message: 'Internal server error' });
-        }
-    }
-
-    /**
-     * Request password reset
+     * Forgot password
      * POST /api/v1/auth/forgot-password
      */
     static async forgotPassword(req: Request, res: Response): Promise<void> {
@@ -203,39 +156,29 @@ export class AuthController {
                 return;
             }
 
-            // Find user
             const user = await prisma.user.findUnique({
                 where: { email }
             });
 
-            // For security, always return success even if user doesn't exist
             if (!user) {
-                res.status(200).json({ message: 'If the email exists, a reset link has been sent' });
+                // Don't reveal if user exists
+                res.status(200).json({ message: 'If an account exists, a reset email has been sent' });
                 return;
             }
 
-            // Generate reset token (valid for 1 hour)
-            const jwtSecret = process.env.JWT_SECRET;
-            if (!jwtSecret) {
-                throw new Error('JWT_SECRET not configured');
-            }
-
+            // Generate reset token
             const resetToken = jwt.sign(
                 { userId: user.id, type: 'password-reset' },
-                jwtSecret,
+                process.env.JWT_SECRET || 'default_secret',
                 { expiresIn: '1h' }
             );
 
-            // TODO: Send email with reset link
-            // For now, just log the token (in production, send email)
-            console.log(`📧 Password reset link for ${email}:`);
-            console.log(`http://localhost:5173/reset-password?token=${resetToken}`);
+            // Send reset email
+            const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+            await emailService.sendPasswordResetEmail(user.email, user.name, resetLink);
 
-            res.status(200).json({
-                message: 'If the email exists, a reset link has been sent',
-                // Remove this in production - only for testing
-                resetToken
-            });
+            res.status(200).json({ message: 'If an account exists, a reset email has been sent' });
+
         } catch (error) {
             console.error('Forgot password error:', error);
             res.status(500).json({ message: 'Internal server error' });
@@ -261,11 +204,7 @@ export class AuthController {
             }
 
             // Verify token
-            const jwtSecret = process.env.JWT_SECRET;
-            if (!jwtSecret) {
-                throw new Error('JWT_SECRET not configured');
-            }
-
+            const jwtSecret = process.env.JWT_SECRET || 'default_secret';
             let decoded: any;
             try {
                 decoded = jwt.verify(token, jwtSecret);
@@ -290,8 +229,45 @@ export class AuthController {
             });
 
             res.status(200).json({ message: 'Password reset successful' });
+
         } catch (error) {
             console.error('Reset password error:', error);
+            res.status(500).json({ message: 'Internal server error' });
+        }
+    }
+
+    /**
+     * Get current user profile
+     * GET /api/v1/auth/profile
+     */
+    static async getProfile(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const userId = req.userId;
+
+            if (!userId) {
+                res.status(401).json({ message: 'Unauthorized' });
+                return;
+            }
+
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+                select: {
+                    id: true,
+                    email: true,
+                    name: true,
+                    createdAt: true
+                }
+            });
+
+            if (!user) {
+                res.status(404).json({ message: 'User not found' });
+                return;
+            }
+
+            res.status(200).json({ user });
+
+        } catch (error) {
+            console.error('Get profile error:', error);
             res.status(500).json({ message: 'Internal server error' });
         }
     }

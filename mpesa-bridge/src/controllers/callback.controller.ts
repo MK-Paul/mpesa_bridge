@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../config/prisma';
 import { getIo } from '../config/socket';
+import { emailService } from '../services/email.service';
 
 export class CallbackController {
 
@@ -20,7 +21,12 @@ export class CallbackController {
 
             // 1. Find the transaction
             const transaction = await prisma.transaction.findUnique({
-                where: { checkoutRequestId: CheckoutRequestID }
+                where: { checkoutRequestId: CheckoutRequestID },
+                include: {
+                    project: {
+                        include: { user: true }
+                    }
+                }
             });
 
             if (!transaction) {
@@ -71,6 +77,19 @@ export class CallbackController {
                 phoneNumber: updatedTransaction.phoneNumber,
                 updatedAt: updatedTransaction.updatedAt
             });
+
+            // 5. Send Email Notification (if successful)
+            if (status === 'COMPLETED' && transaction.project.user) {
+                emailService.sendEmail({
+                    to: transaction.project.user.email,
+                    subject: 'Payment Received! 💰',
+                    html: emailService.getTransactionSuccessTemplate(
+                        updatedTransaction.amount,
+                        updatedTransaction.mpesaReceipt || 'N/A',
+                        updatedTransaction.phoneNumber
+                    )
+                });
+            }
 
             console.log(`✅ Transaction ${transaction.id} updated to ${status} - WebSocket events emitted`);
 

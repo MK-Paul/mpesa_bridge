@@ -2,10 +2,12 @@ import { motion } from 'framer-motion';
 import { User, Lock, Webhook, Save, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useProjects } from '../../context/ProjectContext';
 import axios from 'axios';
 
 export default function Settings() {
     const { user } = useAuth();
+    const { activeProject, refreshProjects } = useProjects();
     const [loading, setLoading] = useState(false);
     const [saved, setSaved] = useState(false);
 
@@ -27,24 +29,17 @@ export default function Settings() {
             setName(user.name);
             setEmail(user.email);
         }
-        fetchWebhookConfig();
     }, [user]);
 
-    const fetchWebhookConfig = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get(`${import.meta.env.VITE_API_URL}/user/projects`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (response.data.projects && response.data.projects.length > 0) {
-                const project = response.data.projects[0];
-                setWebhookUrl(project.webhookUrl || '');
-                setWebhookSecret(project.webhookSecret || '');
-            }
-        } catch (error) {
-            console.error('Failed to fetch webhook config:', error);
+    useEffect(() => {
+        if (activeProject) {
+            setWebhookUrl(activeProject.webhookUrl || '');
+            setWebhookSecret(activeProject.webhookSecret || '');
+        } else {
+            setWebhookUrl('');
+            setWebhookSecret('');
         }
-    };
+    }, [activeProject]);
 
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -95,14 +90,17 @@ export default function Settings() {
 
     const handleSaveWebhook = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!activeProject) return;
+
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
             await axios.put(
-                `${import.meta.env.VITE_API_URL}/user/webhook`,
+                `${import.meta.env.VITE_API_URL}/projects/${activeProject.id}/webhook`,
                 { webhookUrl, webhookSecret },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
+            await refreshProjects();
             setSaved(true);
             setTimeout(() => setSaved(false), 2000);
         } catch (error) {
@@ -268,41 +266,42 @@ export default function Settings() {
                     </div>
                 </div>
 
-                <form onSubmit={handleSaveWebhook} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-2">Webhook URL</label>
-                        <input
-                            type="url"
-                            value={webhookUrl}
-                            onChange={(e) => setWebhookUrl(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
-                            placeholder="https://your-server.com/webhooks/mpesa"
-                        />
-                        <p className="text-xs text-slate-500 mt-2">
-                            This URL will receive POST requests when transactions are completed
-                        </p>
-                    </div>
+                {activeProject ? (
+                    <form onSubmit={handleSaveWebhook} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Webhook URL</label>
+                            <input
+                                type="url"
+                                value={webhookUrl}
+                                onChange={(e) => setWebhookUrl(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                placeholder="https://your-server.com/webhooks/mpesa"
+                            />
+                            <p className="text-xs text-slate-500 mt-2">
+                                This URL will receive POST requests when transactions are completed
+                            </p>
+                        </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-2">Webhook Secret (Optional)</label>
-                        <input
-                            type="text"
-                            value={webhookSecret}
-                            onChange={(e) => setWebhookSecret(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
-                            placeholder="your-webhook-secret"
-                        />
-                        <p className="text-xs text-slate-500 mt-2">
-                            Use this to verify webhook requests are from M-Pesa Bridge
-                        </p>
-                    </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Webhook Secret (Optional)</label>
+                            <input
+                                type="text"
+                                value={webhookSecret}
+                                onChange={(e) => setWebhookSecret(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                placeholder="your-webhook-secret"
+                            />
+                            <p className="text-xs text-slate-500 mt-2">
+                                Use this to verify webhook requests are from M-Pesa Bridge
+                            </p>
+                        </div>
 
-                    <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
-                        <p className="text-sm text-blue-200 mb-2">
-                            <strong>Note:</strong> Webhooks will send the following payload:
-                        </p>
-                        <pre className="text-xs text-slate-400 overflow-x-auto">
-                            {`{
+                        <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                            <p className="text-sm text-blue-200 mb-2">
+                                <strong>Note:</strong> Webhooks will send the following payload:
+                            </p>
+                            <pre className="text-xs text-slate-400 overflow-x-auto">
+                                {`{
   "transactionId": "abc123",
   "status": "COMPLETED",
   "amount": 1000,
@@ -310,26 +309,31 @@ export default function Settings() {
   "mpesaReceipt": "QA12BC3DE4",
   "timestamp": "2024-01-01T12:00:00Z"
 }`}
-                        </pre>
-                    </div>
+                            </pre>
+                        </div>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="flex items-center gap-2 px-6 py-3 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-medium transition-all disabled:opacity-50"
-                    >
-                        {loading ? (
-                            <Loader2 size={18} className="animate-spin" />
-                        ) : saved ? (
-                            'Saved!'
-                        ) : (
-                            <>
-                                <Save size={18} />
-                                Save Webhook
-                            </>
-                        )}
-                    </button>
-                </form>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-medium transition-all disabled:opacity-50"
+                        >
+                            {loading ? (
+                                <Loader2 size={18} className="animate-spin" />
+                            ) : saved ? (
+                                'Saved!'
+                            ) : (
+                                <>
+                                    <Save size={18} />
+                                    Save Webhook
+                                </>
+                            )}
+                        </button>
+                    </form>
+                ) : (
+                    <div className="text-center py-8 text-slate-400">
+                        Please select a project to configure webhooks.
+                    </div>
+                )}
             </motion.div>
         </div>
     );

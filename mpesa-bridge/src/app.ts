@@ -13,10 +13,12 @@ import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import { apiLimiter } from './middleware/rateLimiter.middleware';
 import { errorHandler } from './middleware/errorHandler.middleware';
+import { analyticsMiddleware } from './middleware/analytics.middleware';
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(analyticsMiddleware);
 app.use(apiLimiter); // Apply general rate limiter to all routes
 
 // Routes
