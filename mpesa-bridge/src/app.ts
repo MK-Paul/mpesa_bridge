@@ -3,6 +3,9 @@ import cors from 'cors';
 
 const app: Application = express();
 
+// Trust proxy - Required for Render/production deployment
+app.set('trust proxy', 1);
+
 import transactionRoutes from './routes/transaction.routes';
 import callbackRoutes from './routes/callback.routes';
 import projectRoutes from './routes/project.routes';
