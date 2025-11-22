@@ -100,7 +100,7 @@ export default function DashboardLayout() {
             <div className="flex-1 md:ml-64">
                 {/* Header */}
                 <header className="glass border-b border-white/10 sticky top-0 z-40">
-                    <div className="px-6 py-4 flex items-center justify-between">
+                    <div className="px-4 md:px-6 py-4 flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <button
                                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -202,7 +202,7 @@ export default function DashboardLayout() {
                 )}
 
                 {/* Page Content */}
-                <main className="p-6">
+                <main className="p-4 md:p-6">
                     <Outlet />
                 </main>
             </div>

@@ -157,8 +157,14 @@ export class UserController {
                     name: true,
                     publicKey: true,
                     secretKey: true,
+                    testPublicKey: true,
+                    testSecretKey: true,
                     webhookUrl: true,
                     webhookSecret: true,
+                    shortCode: true,
+                    consumerKey: true,
+                    consumerSecret: true,
+                    passkey: true,
                     createdAt: true,
                     updatedAt: true
                 }

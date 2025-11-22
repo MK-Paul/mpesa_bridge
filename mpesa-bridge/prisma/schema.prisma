@@ -48,6 +48,13 @@ model Project {
   secretKey   String   @unique @map("secret_key")
   testPublicKey String? @unique @map("test_public_key")
   testSecretKey String? @unique @map("test_secret_key")
+  
+  // M-Pesa Production Credentials
+  shortCode     String?  @map("short_code")
+  consumerKey   String?  @map("consumer_key")
+  consumerSecret String? @map("consumer_secret")
+  passkey       String?  @map("passkey")
+
   callbackUrl String?  @map("callback_url")
   webhookUrl  String?  @map("webhook_url")
   webhookSecret String? @map("webhook_secret")

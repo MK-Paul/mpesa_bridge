@@ -9,14 +9,17 @@ export class MpesaService {
     /**
      * Generates an OAuth Access Token from Safaricom
      */
-    public static async getAccessToken(): Promise<string> {
+    public static async getAccessToken(creds?: { consumerKey: string; consumerSecret: string }): Promise<string> {
+        const consumerKey = creds?.consumerKey || config.mpesa.consumerKey;
+        const consumerSecret = creds?.consumerSecret || config.mpesa.consumerSecret;
+
         const credentials = Buffer.from(
-            `${config.mpesa.consumerKey}:${config.mpesa.consumerSecret}`
+            `${consumerKey}:${consumerSecret}`
         ).toString('base64');
 
         console.log('🔐 M-Pesa Auth Request:');
         console.log('  URL:', `${this.baseUrl}/oauth/v1/generate?grant_type=client_credentials`);
-        console.log('  Consumer Key:', config.mpesa.consumerKey?.substring(0, 10) + '...');
+        console.log('  Consumer Key:', consumerKey?.substring(0, 10) + '...');
         console.log('  Environment:', config.env);
 
         try {
@@ -44,21 +47,30 @@ export class MpesaService {
     /**
      * Triggers the STK Push (Lipa na M-Pesa Online)
      */
-    public static async sendSTKPush(phone: string, amount: number, reference: string) {
-        const token = await this.getAccessToken();
+    public static async sendSTKPush(
+        phone: string,
+        amount: number,
+        reference: string,
+        creds?: { consumerKey: string; consumerSecret: string; passkey: string; shortCode: string }
+    ) {
+        const token = await this.getAccessToken(creds);
         const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
+
+        const shortCode = creds?.shortCode || config.mpesa.shortcode;
+        const passkey = creds?.passkey || config.mpesa.passkey;
+
         const password = Buffer.from(
-            `${config.mpesa.shortcode}${config.mpesa.passkey}${timestamp}`
+            `${shortCode}${passkey}${timestamp}`
         ).toString('base64');
 
         const payload = {
-            BusinessShortCode: config.mpesa.shortcode,
+            BusinessShortCode: shortCode,
             Password: password,
             Timestamp: timestamp,
             TransactionType: 'CustomerPayBillOnline',
             Amount: amount,
             PartyA: phone, // The phone sending money
-            PartyB: config.mpesa.shortcode, // The paybill receiving money
+            PartyB: shortCode, // The paybill receiving money
             PhoneNumber: phone,
             CallBackURL: config.mpesa.callbackUrl,
             AccountReference: reference,

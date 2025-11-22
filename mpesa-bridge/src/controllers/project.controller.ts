@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { prisma } from '../config/prisma';
 import crypto from 'crypto';
+import { encrypt } from '../utils/encryption';
 import { AuthRequest } from '../middleware/auth.middleware';
 
 export class ProjectController {
@@ -184,6 +185,56 @@ export class ProjectController {
             });
         } catch (error) {
             console.error('Update webhook error:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+    /**
+     * Update M-Pesa credentials
+     * PUT /api/v1/projects/:id/mpesa-credentials
+     */
+    static async updateMpesaCredentials(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const userId = req.userId;
+            const { id } = req.params;
+            const { shortCode, consumerKey, consumerSecret, passkey } = req.body;
+
+            if (!userId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
+
+            // Verify project belongs to user
+            const project = await prisma.project.findFirst({
+                where: { id, userId }
+            });
+
+            if (!project) {
+                res.status(404).json({ error: 'Project not found' });
+                return;
+            }
+
+            // Encrypt secrets if provided
+            const encryptedConsumerKey = consumerKey ? encrypt(consumerKey) : undefined;
+            const encryptedConsumerSecret = consumerSecret ? encrypt(consumerSecret) : undefined;
+            const encryptedPasskey = passkey ? encrypt(passkey) : undefined;
+
+            // Prepare update data
+            const updateData: any = {};
+            if (shortCode !== undefined) updateData.shortCode = shortCode || null;
+            if (encryptedConsumerKey !== undefined) updateData.consumerKey = encryptedConsumerKey || null;
+            if (encryptedConsumerSecret !== undefined) updateData.consumerSecret = encryptedConsumerSecret || null;
+            if (encryptedPasskey !== undefined) updateData.passkey = encryptedPasskey || null;
+
+            await prisma.project.update({
+                where: { id },
+                data: updateData
+            });
+
+            res.status(200).json({
+                message: 'M-Pesa credentials updated successfully'
+            });
+        } catch (error) {
+            console.error('Update M-Pesa credentials error:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }

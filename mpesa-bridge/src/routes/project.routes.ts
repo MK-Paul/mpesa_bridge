@@ -14,5 +14,6 @@ router.post('/', projectCreationLimiter, validateProjectCreation, checkValidatio
 router.delete('/:id', ProjectController.delete);
 router.put('/:id/regenerate', ProjectController.regenerateKeys);
 router.put('/:id/webhook', ProjectController.updateWebhook);
+router.put('/:id/mpesa-credentials', ProjectController.updateMpesaCredentials);
 
 export default router;

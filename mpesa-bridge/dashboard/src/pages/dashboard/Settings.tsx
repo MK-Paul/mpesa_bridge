@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion';
-import { User, Lock, Webhook, Save, Loader2 } from 'lucide-react';
+import { User, Lock, Webhook, Save, Loader2, CreditCard } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useProjects } from '../../context/ProjectContext';
 import axios from 'axios';
+import MpesaCredentialsForm from '../../components/MpesaCredentialsForm';
 
 export default function Settings() {
     const { user } = useAuth();
@@ -247,6 +248,32 @@ export default function Settings() {
                         )}
                     </button>
                 </form>
+            </motion.div>
+
+            {/* M-Pesa Credentials Settings */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="glass rounded-2xl p-6 border border-white/10"
+            >
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
+                        <CreditCard size={20} className="text-green-500" />
+                    </div>
+                    <div>
+                        <h3 className="font-semibold text-lg">M-Pesa Configuration</h3>
+                        <p className="text-sm text-slate-400">Set up your live M-Pesa credentials</p>
+                    </div>
+                </div>
+
+                {activeProject ? (
+                    <MpesaCredentialsForm activeProject={activeProject} onUpdate={refreshProjects} />
+                ) : (
+                    <div className="text-center py-8 text-slate-400">
+                        Please select a project to configure M-Pesa.
+                    </div>
+                )}
             </motion.div>
 
             {/* Webhook Settings */}

@@ -3,6 +3,7 @@ import { MpesaService } from '../services/mpesa.service';
 import { prisma } from '../config/prisma';
 import axios from 'axios';
 import crypto from 'crypto';
+import { decrypt } from '../utils/encryption';
 
 export class TransactionController {
 
@@ -117,7 +118,24 @@ export class TransactionController {
             }
 
             // 4. Handle Live Mode (Real M-Pesa)
-            const mpesaResponse = await MpesaService.sendSTKPush(phoneNumber, amount, description || 'Order');
+
+            // Prepare credentials
+            let mpesaCreds = undefined;
+            if (project.consumerKey && project.consumerSecret && project.passkey && project.shortCode) {
+                try {
+                    mpesaCreds = {
+                        consumerKey: decrypt(project.consumerKey),
+                        consumerSecret: decrypt(project.consumerSecret),
+                        passkey: decrypt(project.passkey),
+                        shortCode: project.shortCode
+                    };
+                } catch (err) {
+                    console.error('Failed to decrypt M-Pesa credentials:', err);
+                    // Fallback to env vars will happen in service if undefined
+                }
+            }
+
+            const mpesaResponse = await MpesaService.sendSTKPush(phoneNumber, amount, description || 'Order', mpesaCreds);
 
             // Update Transaction with Safaricom IDs
             await prisma.transaction.update({

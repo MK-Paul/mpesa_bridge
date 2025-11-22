@@ -11,6 +11,10 @@ export interface Project {
     testSecretKey?: string;
     webhookUrl?: string;
     webhookSecret?: string;
+    shortCode?: string;
+    consumerKey?: string;
+    consumerSecret?: string;
+    passkey?: string;
     createdAt: string;
 }
 
