@@ -27,6 +27,7 @@ exports.AuthController = void 0;
 const client_1 = require("@prisma/client");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const crypto_1 = __importDefault(require("crypto"));
 const prisma = new client_1.PrismaClient();
 class AuthController {
     /**
@@ -69,6 +70,15 @@ class AuthController {
                         email: true,
                         name: true,
                         createdAt: true
+                    }
+                });
+                // Auto-create default project for user
+                yield prisma.project.create({
+                    data: {
+                        name: `${user.name}'s Project`,
+                        publicKey: `pk_live_${crypto_1.default.randomBytes(12).toString('hex')}`,
+                        secretKey: `sk_live_${crypto_1.default.randomBytes(24).toString('hex')}`,
+                        userId: user.id
                     }
                 });
                 // Generate JWT

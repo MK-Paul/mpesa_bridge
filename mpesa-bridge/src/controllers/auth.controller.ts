@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { AuthRequest } from '../middleware/auth.middleware';
 
 const prisma = new PrismaClient();
@@ -52,6 +53,16 @@ export class AuthController {
                     email: true,
                     name: true,
                     createdAt: true
+                }
+            });
+
+            // Auto-create default project for user
+            await prisma.project.create({
+                data: {
+                    name: `${user.name}'s Project`,
+                    publicKey: `pk_live_${crypto.randomBytes(12).toString('hex')}`,
+                    secretKey: `sk_live_${crypto.randomBytes(24).toString('hex')}`,
+                    userId: user.id
                 }
             });
 

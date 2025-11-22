@@ -12,6 +12,7 @@ const transaction_routes_1 = __importDefault(require("./routes/transaction.route
 const callback_routes_1 = __importDefault(require("./routes/callback.routes"));
 const project_routes_1 = __importDefault(require("./routes/project.routes"));
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
+const user_routes_1 = __importDefault(require("./routes/user.routes"));
 const rateLimiter_middleware_1 = require("./middleware/rateLimiter.middleware");
 const errorHandler_middleware_1 = require("./middleware/errorHandler.middleware");
 // Middleware
@@ -20,6 +21,7 @@ app.use(express_1.default.json());
 app.use(rateLimiter_middleware_1.apiLimiter); // Apply general rate limiter to all routes
 // Routes
 app.use('/api/v1/auth', auth_routes_1.default);
+app.use('/api/v1/user', user_routes_1.default);
 app.use('/api/v1/transactions', transaction_routes_1.default);
 app.use('/api/v1/callbacks', callback_routes_1.default);
 app.use('/api/v1/projects', project_routes_1.default);
