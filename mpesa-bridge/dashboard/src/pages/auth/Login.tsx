@@ -1,8 +1,22 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Zap, ArrowRight, Github } from 'lucide-react';
+import { useEffect } from 'react';
 
 export default function Login() {
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                navigate('/');
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [navigate]);
+
     return (
         <div className="min-h-screen bg-background flex items-center justify-center p-6 relative overflow-hidden">
             {/* Background Effects */}
