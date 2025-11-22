@@ -8,13 +8,13 @@ export class TransactionController {
 
     static async initiate(req: Request, res: Response): Promise<void> {
         try {
-            const { phone, amount, reference } = req.body;
+            const { phoneNumber, amount, description } = req.body;
             const project = (req as any).project;
             const apiKey = (req as any).apiKey; // Middleware should attach this
 
             // 1. Basic Validation
-            if (!phone || !amount) {
-                res.status(400).json({ error: 'Missing required fields: phone, amount' });
+            if (!phoneNumber || !amount) {
+                res.status(400).json({ error: 'Missing required fields: phoneNumber, amount' });
                 return;
             }
 
@@ -27,11 +27,11 @@ export class TransactionController {
                 data: {
                     projectId: project.id,
                     amount,
-                    phoneNumber: phone,
+                    phoneNumber: phoneNumber,
                     status: 'PENDING',
                     environment,
                     source: 'DIRECT_API',
-                    metadata: JSON.stringify({ reference })
+                    metadata: JSON.stringify({ description })
                 }
             });
 
@@ -74,7 +74,7 @@ export class TransactionController {
                                 transactionId: transaction.id,
                                 status,
                                 amount,
-                                phoneNumber: phone,
+                                phoneNumber: phoneNumber,
                                 mpesaReceipt,
                                 failureReason,
                                 timestamp: new Date().toISOString(),
@@ -117,7 +117,7 @@ export class TransactionController {
             }
 
             // 4. Handle Live Mode (Real M-Pesa)
-            const mpesaResponse = await MpesaService.sendSTKPush(phone, amount, reference || 'Order');
+            const mpesaResponse = await MpesaService.sendSTKPush(phoneNumber, amount, description || 'Order');
 
             // Update Transaction with Safaricom IDs
             await prisma.transaction.update({

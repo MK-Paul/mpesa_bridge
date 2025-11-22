@@ -4,8 +4,8 @@ import { Request, Response, NextFunction } from 'express';
  * Middleware to sanitize phone numbers to Kenyan format (254XXXXXXXXX)
  */
 export const sanitizePhoneNumber = (req: Request, res: Response, next: NextFunction) => {
-    if (req.body.phone) {
-        let phone = req.body.phone.toString().trim();
+    if (req.body.phoneNumber) {
+        let phone = req.body.phoneNumber.toString().trim();
 
         // Remove all spaces, dashes, and parentheses
         phone = phone.replace(/[\s\-\(\)]/g, '');
@@ -26,7 +26,7 @@ export const sanitizePhoneNumber = (req: Request, res: Response, next: NextFunct
         }
 
         // Update the request body with sanitized phone
-        req.body.phone = phone;
+        req.body.phoneNumber = phone;
     }
 
     next();

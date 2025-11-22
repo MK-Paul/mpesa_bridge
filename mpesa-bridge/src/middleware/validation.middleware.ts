@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 
 // Validation rules for transaction initiation
 export const validateTransactionInit = [
-    body('phone')
+    body('phoneNumber')
         .trim()
         .matches(/^254[17]\d{8}$/)
         .withMessage('Phone number must be a valid Kenyan number (254XXXXXXXXX)'),
@@ -12,11 +12,11 @@ export const validateTransactionInit = [
         .isFloat({ min: 1, max: 150000 })
         .withMessage('Amount must be between 1 and 150,000 KES'),
 
-    body('reference')
+    body('description')
         .optional()
         .trim()
-        .isLength({ min: 1, max: 50 })
-        .withMessage('Reference must be between 1 and 50 characters'),
+        .isLength({ min: 1, max: 100 })
+        .withMessage('Description must be between 1 and 100 characters'),
 ];
 
 // Validation rules for project creation
