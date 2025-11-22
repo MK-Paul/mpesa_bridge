@@ -57,8 +57,8 @@ export class TransactionController {
                 // Else -> COMPLETED
                 const amountStr = amount.toString();
                 let status = 'COMPLETED';
-                let failureReason = null;
-                let mpesaReceipt = `SB${crypto.randomBytes(8).toString('hex').toUpperCase()}`;
+                let failureReason: string | null = null;
+                let mpesaReceipt: string | null = `SB${crypto.randomBytes(8).toString('hex').toUpperCase()}`;
 
                 if (amountStr.endsWith('1')) {
                     status = 'FAILED';
