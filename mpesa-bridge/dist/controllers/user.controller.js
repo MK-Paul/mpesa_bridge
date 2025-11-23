@@ -15,7 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserController = void 0;
 const client_1 = require("@prisma/client");
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const crypto_1 = __importDefault(require("crypto"));
 const prisma = new client_1.PrismaClient();
 class UserController {
     /**
@@ -152,8 +151,14 @@ class UserController {
                         name: true,
                         publicKey: true,
                         secretKey: true,
+                        testPublicKey: true,
+                        testSecretKey: true,
                         webhookUrl: true,
                         webhookSecret: true,
+                        shortCode: true,
+                        consumerKey: true,
+                        consumerSecret: true,
+                        passkey: true,
                         createdAt: true,
                         updatedAt: true
                     }
@@ -162,96 +167,6 @@ class UserController {
             }
             catch (error) {
                 console.error('Get projects error:', error);
-                res.status(500).json({ message: 'Internal server error' });
-            }
-        });
-    }
-    /**
-     * Regenerate API keys for a project
-     * PUT /api/v1/user/projects/:id/regenerate
-     */
-    static regenerateKeys(req, res) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const userId = req.userId;
-                const projectId = req.params.id;
-                if (!userId) {
-                    res.status(401).json({ message: 'Unauthorized' });
-                    return;
-                }
-                // Verify project belongs to user
-                const project = yield prisma.project.findFirst({
-                    where: { id: projectId, userId }
-                });
-                if (!project) {
-                    res.status(404).json({ message: 'Project not found' });
-                    return;
-                }
-                // Generate new keys
-                const publicKey = `pk_live_${crypto_1.default.randomBytes(12).toString('hex')}`;
-                const secretKey = `sk_live_${crypto_1.default.randomBytes(24).toString('hex')}`;
-                const updatedProject = yield prisma.project.update({
-                    where: { id: projectId },
-                    data: { publicKey, secretKey },
-                    select: {
-                        id: true,
-                        name: true,
-                        publicKey: true,
-                        secretKey: true,
-                        updatedAt: true
-                    }
-                });
-                res.status(200).json({
-                    message: 'API keys regenerated successfully',
-                    project: updatedProject
-                });
-            }
-            catch (error) {
-                console.error('Regenerate keys error:', error);
-                res.status(500).json({ message: 'Internal server error' });
-            }
-        });
-    }
-    /**
-     * Update webhook configuration
-     * PUT /api/v1/user/webhook
-     */
-    static updateWebhook(req, res) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const userId = req.userId;
-                const { webhookUrl, webhookSecret } = req.body;
-                if (!userId) {
-                    res.status(401).json({ message: 'Unauthorized' });
-                    return;
-                }
-                // Get user's first project (for now, assuming one project per user)
-                const project = yield prisma.project.findFirst({
-                    where: { userId }
-                });
-                if (!project) {
-                    res.status(404).json({ message: 'No project found' });
-                    return;
-                }
-                const updatedProject = yield prisma.project.update({
-                    where: { id: project.id },
-                    data: {
-                        webhookUrl: webhookUrl || null,
-                        webhookSecret: webhookSecret || null
-                    },
-                    select: {
-                        webhookUrl: true,
-                        webhookSecret: true,
-                        updatedAt: true
-                    }
-                });
-                res.status(200).json({
-                    message: 'Webhook configuration updated successfully',
-                    webhook: updatedProject
-                });
-            }
-            catch (error) {
-                console.error('Update webhook error:', error);
                 res.status(500).json({ message: 'Internal server error' });
             }
         });
@@ -285,10 +200,25 @@ class UserController {
                     res.status(200).json({ transactions: [] });
                     return;
                 }
+                // Filter by specific project if requested
+                const requestedProjectId = req.query.projectId;
+                let targetProjectIds = projectIds;
+                if (requestedProjectId && requestedProjectId !== 'all') {
+                    if (!projectIds.includes(requestedProjectId)) {
+                        res.status(403).json({ message: 'Access denied to this project' });
+                        return;
+                    }
+                    targetProjectIds = [requestedProjectId];
+                }
                 // Build filter
                 const where = {
-                    projectId: { in: projectIds }
+                    projectId: { in: targetProjectIds }
                 };
+                // Filter by environment if provided
+                const environment = req.query.environment;
+                if (environment && (environment === 'SANDBOX' || environment === 'LIVE')) {
+                    where.environment = environment;
+                }
                 if (status && status !== 'All') {
                     where.status = status;
                 }
@@ -363,9 +293,25 @@ class UserController {
                     });
                     return;
                 }
+                // Filter by specific project if requested
+                const requestedProjectId = req.query.projectId;
+                let targetProjectIds = projectIds;
+                if (requestedProjectId && requestedProjectId !== 'all') {
+                    if (!projectIds.includes(requestedProjectId)) {
+                        res.status(403).json({ message: 'Access denied to this project' });
+                        return;
+                    }
+                    targetProjectIds = [requestedProjectId];
+                }
+                // Filter by environment if provided
+                const environment = req.query.environment;
+                const whereClause = { projectId: { in: targetProjectIds } };
+                if (environment && (environment === 'SANDBOX' || environment === 'LIVE')) {
+                    whereClause.environment = environment;
+                }
                 // Get all transactions
                 const transactions = yield prisma.transaction.findMany({
-                    where: { projectId: { in: projectIds } },
+                    where: whereClause,
                     select: {
                         amount: true,
                         status: true,
@@ -397,6 +343,86 @@ class UserController {
             }
             catch (error) {
                 console.error('Get analytics error:', error);
+                res.status(500).json({ message: 'Internal server error' });
+            }
+        });
+    }
+    /**
+     * Get API usage stats
+     * GET /api/v1/user/api-usage
+     */
+    static getApiUsage(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const userId = req.userId;
+                if (!userId) {
+                    res.status(401).json({ message: 'Unauthorized' });
+                    return;
+                }
+                // Return empty data if ApiCall table doesn't exist yet
+                try {
+                    const sevenDaysAgo = new Date();
+                    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                    // @ts-ignore - ApiCall model exists but TS might not know yet
+                    const apiCalls = yield prisma.apiCall.findMany({
+                        where: {
+                            userId,
+                            createdAt: { gte: sevenDaysAgo }
+                        },
+                        orderBy: { createdAt: 'asc' }
+                    });
+                    // Aggregate by day
+                    const dailyUsage = {};
+                    // Initialize last 7 days with 0
+                    for (let i = 6; i >= 0; i--) {
+                        const d = new Date();
+                        d.setDate(d.getDate() - i);
+                        const dateStr = d.toISOString().split('T')[0];
+                        dailyUsage[dateStr] = 0;
+                    }
+                    apiCalls.forEach((call) => {
+                        const dateStr = call.createdAt.toISOString().split('T')[0];
+                        if (dailyUsage[dateStr] !== undefined) {
+                            dailyUsage[dateStr]++;
+                        }
+                    });
+                    const usageHistory = Object.entries(dailyUsage)
+                        .map(([date, count]) => ({ date, count }))
+                        .sort((a, b) => a.date.localeCompare(b.date));
+                    // Aggregate by endpoint
+                    const endpointUsage = {};
+                    apiCalls.forEach((call) => {
+                        const endpoint = `${call.method} ${call.endpoint}`;
+                        endpointUsage[endpoint] = (endpointUsage[endpoint] || 0) + 1;
+                    });
+                    const topEndpoints = Object.entries(endpointUsage)
+                        .map(([endpoint, count]) => ({ endpoint, count }))
+                        .sort((a, b) => b.count - a.count)
+                        .slice(0, 5);
+                    res.status(200).json({
+                        totalCalls: apiCalls.length,
+                        usageHistory,
+                        topEndpoints
+                    });
+                }
+                catch (dbError) {
+                    // If ApiCall table doesn't exist, return empty data
+                    console.log('ApiCall table not accessible, returning empty data:', dbError);
+                    const dailyUsage = [];
+                    for (let i = 6; i >= 0; i--) {
+                        const d = new Date();
+                        d.setDate(d.getDate() - i);
+                        dailyUsage.push({ date: d.toISOString().split('T')[0], count: 0 });
+                    }
+                    res.status(200).json({
+                        totalCalls: 0,
+                        usageHistory: dailyUsage,
+                        topEndpoints: []
+                    });
+                }
+            }
+            catch (error) {
+                console.error('Get API usage error:', error);
                 res.status(500).json({ message: 'Internal server error' });
             }
         });

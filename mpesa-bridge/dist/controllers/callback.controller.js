@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CallbackController = void 0;
 const prisma_1 = require("../config/prisma");
 const socket_1 = require("../config/socket");
+const email_service_1 = require("../services/email.service");
 class CallbackController {
     static handleMpesaCallback(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26,7 +27,12 @@ class CallbackController {
                 console.log(`🔔 Callback Received: ${ResultCode} - ${ResultDesc}`);
                 // 1. Find the transaction
                 const transaction = yield prisma_1.prisma.transaction.findUnique({
-                    where: { checkoutRequestId: CheckoutRequestID }
+                    where: { checkoutRequestId: CheckoutRequestID },
+                    include: {
+                        project: {
+                            include: { user: true }
+                        }
+                    }
                 });
                 if (!transaction) {
                     console.error(`Transaction not found for CheckoutRequestID: ${CheckoutRequestID}`);
@@ -41,6 +47,9 @@ class CallbackController {
                     // Extract Receipt Number (Item 1 usually holds the receipt)
                     const receiptItem = CallbackMetadata === null || CallbackMetadata === void 0 ? void 0 : CallbackMetadata.Item.find((item) => item.Name === 'MpesaReceiptNumber');
                     receipt = (receiptItem === null || receiptItem === void 0 ? void 0 : receiptItem.Value) || null;
+                }
+                else if (ResultCode === 1032) {
+                    status = 'CANCELLED';
                 }
                 // 3. Update Database
                 const updatedTransaction = yield prisma_1.prisma.transaction.update({
@@ -70,6 +79,14 @@ class CallbackController {
                     phoneNumber: updatedTransaction.phoneNumber,
                     updatedAt: updatedTransaction.updatedAt
                 });
+                // 5. Send Email Notification (if successful)
+                if (status === 'COMPLETED' && transaction.project.user) {
+                    email_service_1.emailService.sendEmail({
+                        to: transaction.project.user.email,
+                        subject: 'Payment Received! 💰',
+                        html: email_service_1.emailService.getTransactionSuccessTemplate(updatedTransaction.amount, updatedTransaction.mpesaReceipt || 'N/A', updatedTransaction.phoneNumber)
+                    });
+                }
                 console.log(`✅ Transaction ${transaction.id} updated to ${status} - WebSocket events emitted`);
                 res.status(200).json({ message: 'Callback processed successfully' });
             }

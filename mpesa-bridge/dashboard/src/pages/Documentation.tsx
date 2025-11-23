@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ArrowLeft, Book, Code, Smartphone, Globe, Copy, Check, Activity } from 'lucide-react';
+import { ArrowLeft, Book, Code, Smartphone, Globe, Copy, Check, Activity, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 
@@ -157,21 +157,61 @@ const handlePay = async () => {
 };`} />
                         </section>
 
-                        <section id="webhooks" className="mb-16">
+                        <section id="sandbox" className="mb-16">
                             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                                <Activity size={24} className="text-purple-500" /> Webhooks & Real-time
+                                <Code size={24} className="text-yellow-500" /> Sandbox Mode
                             </h2>
                             <p className="text-slate-400 mb-4">
-                                M-Pesa Bridge handles the complex XML callbacks from Safaricom for you.
-                                Instead of setting up your own public server to receive callbacks, you simply
-                                subscribe to real-time events using our SDK.
+                                Every project comes with a Sandbox environment for testing. You can simulate payments without spending real money.
                             </p>
-                            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-6">
-                                <p className="text-blue-200 text-sm">
-                                    <strong>Note:</strong> Traditional HTTP Webhooks (Server-to-Server) are coming soon.
-                                    For now, use the <code>subscribeToUpdates</code> method for real-time confirmation.
+                            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mb-6">
+                                <p className="text-yellow-200 text-sm">
+                                    <strong>Tip:</strong> Use the "Test Payment" button in your dashboard overview to simulate a transaction instantly.
                                 </p>
                             </div>
+                            <p className="text-slate-400 mb-4">
+                                To use the sandbox in your code, simply use your <strong>Test Keys</strong> instead of your Live Keys.
+                            </p>
+                        </section>
+
+                        <section id="credentials" className="mb-16">
+                            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                                <Lock size={24} className="text-red-500" /> M-Pesa Credentials
+                            </h2>
+                            <p className="text-slate-400 mb-4">
+                                To go live, you need to provide your own M-Pesa Daraja API credentials.
+                            </p>
+                            <ol className="list-decimal list-inside space-y-2 text-slate-400 mb-6">
+                                <li>Go to <a href="https://developer.safaricom.co.ke/" target="_blank" rel="noreferrer" className="text-primary hover:underline">Safaricom Developer Portal</a>.</li>
+                                <li>Create an app and select "Lipa na M-Pesa Sandbox" (for testing) or "Production" (for live).</li>
+                                <li>Copy your <strong>Consumer Key</strong>, <strong>Consumer Secret</strong>, and <strong>Passkey</strong>.</li>
+                                <li>Enter these details in your <Link to="/dashboard/settings" className="text-primary hover:underline">Project Settings</Link>.</li>
+                            </ol>
+                        </section>
+
+                        <section id="webhooks" className="mb-16">
+                            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                                <Activity size={24} className="text-purple-500" /> Webhooks
+                            </h2>
+                            <p className="text-slate-400 mb-4">
+                                Webhooks allow your backend to receive real-time updates when a payment is completed.
+                            </p>
+                            <h3 className="text-lg font-bold mb-2">Setting up a Webhook</h3>
+                            <p className="text-slate-400 mb-4">
+                                1. Go to your <Link to="/dashboard/settings" className="text-primary hover:underline">Project Settings</Link>.<br />
+                                2. Enter your server's URL in the "Webhook URL" field (e.g., <code>https://api.yourapp.com/mpesa-webhook</code>).<br />
+                                3. We will send a POST request to this URL whenever a transaction status changes.
+                            </p>
+                            <h3 className="text-lg font-bold mb-2">Webhook Payload</h3>
+                            <CodeBlock code={`{
+  "transactionId": "txn_123456789",
+  "status": "COMPLETED",
+  "amount": 1000,
+  "mpesaReceipt": "QWE123RTY",
+  "phoneNumber": "254712345678",
+  "reference": "Order #123",
+  "metadata": "custom_data"
+}`} />
                         </section>
 
                     </motion.div>

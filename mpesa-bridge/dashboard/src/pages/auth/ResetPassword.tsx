@@ -1,29 +1,34 @@
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Lock, Loader2 } from 'lucide-react';
-import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Lock, ArrowLeft, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 
 export default function ResetPassword() {
     const [searchParams] = useSearchParams();
-    const token = searchParams.get('token');
     const navigate = useNavigate();
+    const token = searchParams.get('token');
 
-    const [newPassword, setNewPassword] = useState('');
+    const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (!token) {
+            setError('Invalid or missing reset token.');
+        }
+    }, [token]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (newPassword !== confirmPassword) {
+        if (password !== confirmPassword) {
             setError('Passwords do not match');
             return;
         }
-
-        if (newPassword.length < 6) {
+        if (password.length < 6) {
             setError('Password must be at least 6 characters');
             return;
         }
@@ -34,108 +39,127 @@ export default function ResetPassword() {
         try {
             await axios.post(`${import.meta.env.VITE_API_URL}/auth/reset-password`, {
                 token,
-                newPassword
+                newPassword: password
             });
             setSuccess(true);
-            setTimeout(() => navigate('/login'), 3000);
+            setTimeout(() => {
+                navigate('/login');
+            }, 3000);
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to reset password');
+            setError(err.response?.data?.message || 'Failed to reset password. Token may be expired.');
         } finally {
             setLoading(false);
         }
     };
 
-    if (!token) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900">
-                <div className="text-center">
-                    <p className="text-red-400">Invalid reset link</p>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900">
-            {/* Background Effects */}
-            <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20" />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent" />
+        <div className="min-h-screen flex items-center justify-center bg-background p-4">
+            <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute top-[-50%] left-[-20%] w-[800px] h-[800px] rounded-full bg-primary/5 blur-[120px]" />
+                <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-secondary/5 blur-[100px]" />
+            </div>
 
-            <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="w-full max-w-md"
-                >
-                    <div className="glass rounded-2xl p-8 border border-white/10">
-                        <div className="text-center mb-8">
-                            <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-                                <Lock size={32} className="text-primary" />
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full max-w-md relative z-10"
+            >
+                <div className="glass p-8 rounded-2xl border border-white/10 shadow-2xl">
+                    {success ? (
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="text-center py-8"
+                        >
+                            <div className="w-16 h-16 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <CheckCircle size={32} />
                             </div>
-                            <h2 className="text-3xl font-bold mb-2">Reset Password</h2>
-                            <p className="text-slate-400">Enter your new password</p>
-                        </div>
+                            <h3 className="text-xl font-bold mb-2">Password Reset Successful!</h3>
+                            <p className="text-slate-400 mb-6">
+                                Your password has been updated. Redirecting to login...
+                            </p>
+                            <Link
+                                to="/login"
+                                className="text-primary hover:text-primary/80 font-medium"
+                            >
+                                Click here if not redirected
+                            </Link>
+                        </motion.div>
+                    ) : (
+                        <>
+                            <Link to="/login" className="inline-flex items-center text-sm text-slate-400 hover:text-white mb-6 transition-colors">
+                                <ArrowLeft size={16} className="mr-2" />
+                                Back to Login
+                            </Link>
 
-                        {success ? (
-                            <div className="text-center space-y-4">
-                                <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20">
-                                    <p className="text-green-400">
-                                        Password reset successful!
-                                    </p>
-                                </div>
-                                <p className="text-sm text-slate-400">
-                                    Redirecting to login...
+                            <div className="text-center mb-8">
+                                <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+                                    Reset Password
+                                </h1>
+                                <p className="text-slate-400">
+                                    Create a new secure password for your account.
                                 </p>
                             </div>
-                        ) : (
+
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 {error && (
-                                    <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20">
-                                        <p className="text-red-400 text-sm">{error}</p>
+                                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+                                        {error}
                                     </div>
                                 )}
 
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-400 mb-2">
-                                        New Password
-                                    </label>
-                                    <input
-                                        type="password"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                        required
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                        placeholder="••••••••"
-                                    />
-                                </div>
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-300">New Password</label>
+                                        <div className="relative">
+                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                                            <input
+                                                type={showPassword ? 'text' : 'password'}
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-12 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                                                placeholder="••••••••"
+                                                required
+                                                minLength={6}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                                            >
+                                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                            </button>
+                                        </div>
+                                    </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-400 mb-2">
-                                        Confirm New Password
-                                    </label>
-                                    <input
-                                        type="password"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        required
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                        placeholder="••••••••"
-                                    />
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-300">Confirm Password</label>
+                                        <div className="relative">
+                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                                            <input
+                                                type="password"
+                                                value={confirmPassword}
+                                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                                                placeholder="••••••••"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <button
                                     type="submit"
-                                    disabled={loading}
-                                    className="w-full py-3 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                    disabled={loading || !token}
+                                    className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/25"
                                 >
-                                    {loading && <Loader2 size={18} className="animate-spin" />}
-                                    Reset Password
+                                    {loading ? 'Resetting...' : 'Reset Password'}
                                 </button>
                             </form>
-                        )}
-                    </div>
-                </motion.div>
-            </div>
+                        </>
+                    )}
+                </div>
+            </motion.div>
         </div>
     );
 }

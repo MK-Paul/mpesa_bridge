@@ -8,17 +8,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __rest = (this && this.__rest) || function (s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -28,6 +17,7 @@ const client_1 = require("@prisma/client");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const crypto_1 = __importDefault(require("crypto"));
+const email_service_1 = require("../services/email.service");
 const prisma = new client_1.PrismaClient();
 class AuthController {
     /**
@@ -82,11 +72,9 @@ class AuthController {
                     }
                 });
                 // Generate JWT
-                const jwtSecret = process.env.JWT_SECRET;
-                if (!jwtSecret) {
-                    throw new Error('JWT_SECRET not configured');
-                }
-                const token = jsonwebtoken_1.default.sign({ userId: user.id }, jwtSecret, { expiresIn: '7d' });
+                const token = jsonwebtoken_1.default.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '24h' });
+                // Send welcome email
+                yield email_service_1.emailService.sendWelcomeEmail(user.email, user.name);
                 res.status(201).json({
                     message: 'User registered successfully',
                     token,
@@ -94,7 +82,7 @@ class AuthController {
                 });
             }
             catch (error) {
-                console.error('Registration error:', error);
+                console.error('Register error:', error);
                 res.status(500).json({ message: 'Internal server error' });
             }
         });
@@ -107,44 +95,41 @@ class AuthController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { email, password } = req.body;
-                // Validation
                 if (!email || !password) {
                     res.status(400).json({ message: 'Email and password are required' });
                     return;
                 }
                 // Find user
                 const user = yield prisma.user.findUnique({
-                    where: { email },
-                    select: {
-                        id: true,
-                        email: true,
-                        name: true,
-                        password: true,
-                        createdAt: true
-                    }
+                    where: { email }
                 });
                 if (!user) {
-                    res.status(401).json({ message: 'Invalid email or password' });
+                    res.status(401).json({ message: 'Invalid credentials' });
                     return;
                 }
-                // Verify password
+                // Check password
                 const isPasswordValid = yield bcrypt_1.default.compare(password, user.password);
                 if (!isPasswordValid) {
-                    res.status(401).json({ message: 'Invalid email or password' });
+                    res.status(401).json({ message: 'Invalid credentials' });
+                    return;
+                }
+                // Check if user is banned
+                if (user.status === 'BANNED') {
+                    res.status(403).json({ message: 'Your account has been banned. Please contact support.' });
                     return;
                 }
                 // Generate JWT
-                const jwtSecret = process.env.JWT_SECRET;
-                if (!jwtSecret) {
-                    throw new Error('JWT_SECRET not configured');
-                }
-                const token = jsonwebtoken_1.default.sign({ userId: user.id }, jwtSecret, { expiresIn: '7d' });
-                // Remove password from response
-                const { password: _ } = user, userWithoutPassword = __rest(user, ["password"]);
+                const token = jsonwebtoken_1.default.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '24h' });
                 res.status(200).json({
                     message: 'Login successful',
                     token,
-                    user: userWithoutPassword
+                    user: {
+                        id: user.id,
+                        email: user.email,
+                        name: user.name,
+                        role: user.role,
+                        status: user.status
+                    }
                 });
             }
             catch (error) {
@@ -154,41 +139,7 @@ class AuthController {
         });
     }
     /**
-     * Get current user profile
-     * GET /api/v1/auth/profile
-     */
-    static getProfile(req, res) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const userId = req.userId;
-                if (!userId) {
-                    res.status(401).json({ message: 'Unauthorized' });
-                    return;
-                }
-                const user = yield prisma.user.findUnique({
-                    where: { id: userId },
-                    select: {
-                        id: true,
-                        email: true,
-                        name: true,
-                        createdAt: true,
-                        updatedAt: true
-                    }
-                });
-                if (!user) {
-                    res.status(404).json({ message: 'User not found' });
-                    return;
-                }
-                res.status(200).json({ user });
-            }
-            catch (error) {
-                console.error('Get profile error:', error);
-                res.status(500).json({ message: 'Internal server error' });
-            }
-        });
-    }
-    /**
-     * Request password reset
+     * Forgot password
      * POST /api/v1/auth/forgot-password
      */
     static forgotPassword(req, res) {
@@ -199,30 +150,30 @@ class AuthController {
                     res.status(400).json({ message: 'Email is required' });
                     return;
                 }
-                // Find user
                 const user = yield prisma.user.findUnique({
                     where: { email }
                 });
-                // For security, always return success even if user doesn't exist
                 if (!user) {
-                    res.status(200).json({ message: 'If the email exists, a reset link has been sent' });
+                    // Don't reveal if user exists
+                    res.status(200).json({ message: 'If an account exists, a reset email has been sent' });
                     return;
                 }
-                // Generate reset token (valid for 1 hour)
-                const jwtSecret = process.env.JWT_SECRET;
-                if (!jwtSecret) {
-                    throw new Error('JWT_SECRET not configured');
-                }
-                const resetToken = jsonwebtoken_1.default.sign({ userId: user.id, type: 'password-reset' }, jwtSecret, { expiresIn: '1h' });
-                // TODO: Send email with reset link
-                // For now, just log the token (in production, send email)
-                console.log(`📧 Password reset link for ${email}:`);
-                console.log(`http://localhost:5173/reset-password?token=${resetToken}`);
-                res.status(200).json({
-                    message: 'If the email exists, a reset link has been sent',
-                    // Remove this in production - only for testing
-                    resetToken
+                // Generate reset token (random hex string)
+                const resetToken = crypto_1.default.randomBytes(32).toString('hex');
+                const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
+                // Save token hash to database
+                // In a real app, you might want to hash this token before saving
+                yield prisma.user.update({
+                    where: { id: user.id },
+                    data: {
+                        resetToken,
+                        resetTokenExpiry
+                    }
                 });
+                // Send reset email
+                const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+                yield email_service_1.emailService.sendPasswordResetEmail(user.email, user.name, resetLink);
+                res.status(200).json({ message: 'If an account exists, a reset email has been sent' });
             }
             catch (error) {
                 console.error('Forgot password error:', error);
@@ -246,35 +197,67 @@ class AuthController {
                     res.status(400).json({ message: 'Password must be at least 6 characters' });
                     return;
                 }
-                // Verify token
-                const jwtSecret = process.env.JWT_SECRET;
-                if (!jwtSecret) {
-                    throw new Error('JWT_SECRET not configured');
-                }
-                let decoded;
-                try {
-                    decoded = jsonwebtoken_1.default.verify(token, jwtSecret);
-                }
-                catch (err) {
+                // Find user with valid token
+                const user = yield prisma.user.findFirst({
+                    where: {
+                        resetToken: token,
+                        resetTokenExpiry: {
+                            gt: new Date()
+                        }
+                    }
+                });
+                if (!user) {
                     res.status(400).json({ message: 'Invalid or expired reset token' });
-                    return;
-                }
-                // Check if it's a password reset token
-                if (decoded.type !== 'password-reset') {
-                    res.status(400).json({ message: 'Invalid token type' });
                     return;
                 }
                 // Hash new password
                 const hashedPassword = yield bcrypt_1.default.hash(newPassword, 10);
-                // Update password
+                // Update password and clear token
                 yield prisma.user.update({
-                    where: { id: decoded.userId },
-                    data: { password: hashedPassword }
+                    where: { id: user.id },
+                    data: {
+                        password: hashedPassword,
+                        resetToken: null,
+                        resetTokenExpiry: null
+                    }
                 });
                 res.status(200).json({ message: 'Password reset successful' });
             }
             catch (error) {
                 console.error('Reset password error:', error);
+                res.status(500).json({ message: 'Internal server error' });
+            }
+        });
+    }
+    /**
+     * Get current user profile
+     * GET /api/v1/auth/profile
+     */
+    static getProfile(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const userId = req.userId;
+                if (!userId) {
+                    res.status(401).json({ message: 'Unauthorized' });
+                    return;
+                }
+                const user = yield prisma.user.findUnique({
+                    where: { id: userId },
+                    select: {
+                        id: true,
+                        email: true,
+                        name: true,
+                        createdAt: true
+                    }
+                });
+                if (!user) {
+                    res.status(404).json({ message: 'User not found' });
+                    return;
+                }
+                res.status(200).json({ user });
+            }
+            catch (error) {
+                console.error('Get profile error:', error);
                 res.status(500).json({ message: 'Internal server error' });
             }
         });

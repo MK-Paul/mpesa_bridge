@@ -19,13 +19,15 @@ class MpesaService {
     /**
      * Generates an OAuth Access Token from Safaricom
      */
-    static getAccessToken() {
+    static getAccessToken(creds) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b, _c, _d, _e;
-            const credentials = Buffer.from(`${env_1.config.mpesa.consumerKey}:${env_1.config.mpesa.consumerSecret}`).toString('base64');
+            var _a, _b, _c, _d;
+            const consumerKey = (creds === null || creds === void 0 ? void 0 : creds.consumerKey) || env_1.config.mpesa.consumerKey;
+            const consumerSecret = (creds === null || creds === void 0 ? void 0 : creds.consumerSecret) || env_1.config.mpesa.consumerSecret;
+            const credentials = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
             console.log('🔐 M-Pesa Auth Request:');
             console.log('  URL:', `${this.baseUrl}/oauth/v1/generate?grant_type=client_credentials`);
-            console.log('  Consumer Key:', ((_a = env_1.config.mpesa.consumerKey) === null || _a === void 0 ? void 0 : _a.substring(0, 10)) + '...');
+            console.log('  Consumer Key:', (consumerKey === null || consumerKey === void 0 ? void 0 : consumerKey.substring(0, 10)) + '...');
             console.log('  Environment:', env_1.config.env);
             try {
                 const response = yield axios_1.default.get(`${this.baseUrl}/oauth/v1/generate?grant_type=client_credentials`, {
@@ -38,10 +40,10 @@ class MpesaService {
             }
             catch (error) {
                 console.error('❌ M-Pesa Auth Failed!');
-                console.error('  Status Code:', (_b = error.response) === null || _b === void 0 ? void 0 : _b.status);
-                console.error('  Status Text:', (_c = error.response) === null || _c === void 0 ? void 0 : _c.statusText);
-                console.error('  Error Data:', JSON.stringify((_d = error.response) === null || _d === void 0 ? void 0 : _d.data, null, 2));
-                console.error('  Request URL:', (_e = error.config) === null || _e === void 0 ? void 0 : _e.url);
+                console.error('  Status Code:', (_a = error.response) === null || _a === void 0 ? void 0 : _a.status);
+                console.error('  Status Text:', (_b = error.response) === null || _b === void 0 ? void 0 : _b.statusText);
+                console.error('  Error Data:', JSON.stringify((_c = error.response) === null || _c === void 0 ? void 0 : _c.data, null, 2));
+                console.error('  Request URL:', (_d = error.config) === null || _d === void 0 ? void 0 : _d.url);
                 console.error('  Full Error:', error.message);
                 throw new Error('Failed to authenticate with M-Pesa');
             }
@@ -50,20 +52,22 @@ class MpesaService {
     /**
      * Triggers the STK Push (Lipa na M-Pesa Online)
      */
-    static sendSTKPush(phone, amount, reference) {
+    static sendSTKPush(phone, amount, reference, creds) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a;
-            const token = yield this.getAccessToken();
+            const token = yield this.getAccessToken(creds);
             const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
-            const password = Buffer.from(`${env_1.config.mpesa.shortcode}${env_1.config.mpesa.passkey}${timestamp}`).toString('base64');
+            const shortCode = (creds === null || creds === void 0 ? void 0 : creds.shortCode) || env_1.config.mpesa.shortcode;
+            const passkey = (creds === null || creds === void 0 ? void 0 : creds.passkey) || env_1.config.mpesa.passkey;
+            const password = Buffer.from(`${shortCode}${passkey}${timestamp}`).toString('base64');
             const payload = {
-                BusinessShortCode: env_1.config.mpesa.shortcode,
+                BusinessShortCode: shortCode,
                 Password: password,
                 Timestamp: timestamp,
                 TransactionType: 'CustomerPayBillOnline',
                 Amount: amount,
                 PartyA: phone, // The phone sending money
-                PartyB: env_1.config.mpesa.shortcode, // The paybill receiving money
+                PartyB: shortCode, // The paybill receiving money
                 PhoneNumber: phone,
                 CallBackURL: env_1.config.mpesa.callbackUrl,
                 AccountReference: reference,

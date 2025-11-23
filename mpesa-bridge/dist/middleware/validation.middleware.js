@@ -4,18 +4,18 @@ exports.checkValidation = exports.validateProjectCreation = exports.validateTran
 const express_validator_1 = require("express-validator");
 // Validation rules for transaction initiation
 exports.validateTransactionInit = [
-    (0, express_validator_1.body)('phone')
+    (0, express_validator_1.body)('phoneNumber')
         .trim()
         .matches(/^254[17]\d{8}$/)
         .withMessage('Phone number must be a valid Kenyan number (254XXXXXXXXX)'),
     (0, express_validator_1.body)('amount')
         .isFloat({ min: 1, max: 150000 })
         .withMessage('Amount must be between 1 and 150,000 KES'),
-    (0, express_validator_1.body)('reference')
+    (0, express_validator_1.body)('description')
         .optional()
         .trim()
-        .isLength({ min: 1, max: 50 })
-        .withMessage('Reference must be between 1 and 50 characters'),
+        .isLength({ min: 1, max: 100 })
+        .withMessage('Description must be between 1 and 100 characters'),
 ];
 // Validation rules for project creation
 exports.validateProjectCreation = [

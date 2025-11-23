@@ -5,8 +5,8 @@ exports.sanitizePhoneNumber = void 0;
  * Middleware to sanitize phone numbers to Kenyan format (254XXXXXXXXX)
  */
 const sanitizePhoneNumber = (req, res, next) => {
-    if (req.body.phone) {
-        let phone = req.body.phone.toString().trim();
+    if (req.body.phoneNumber) {
+        let phone = req.body.phoneNumber.toString().trim();
         // Remove all spaces, dashes, and parentheses
         phone = phone.replace(/[\s\-\(\)]/g, '');
         // Remove leading + if present
@@ -22,7 +22,7 @@ const sanitizePhoneNumber = (req, res, next) => {
             phone = '254' + phone.substring(1);
         }
         // Update the request body with sanitized phone
-        req.body.phone = phone;
+        req.body.phoneNumber = phone;
     }
     next();
 };
