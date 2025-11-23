@@ -64,7 +64,7 @@ export default function DashboardLayout() {
                                 key={item.path}
                                 to={item.path}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
-                                    ? 'bg-primary text-white'
+                                    ? 'bg-primary/10 text-primary border border-primary/20'
                                     : 'text-slate-400 hover:bg-white/5 hover:text-white'
                                     }`}
                             >

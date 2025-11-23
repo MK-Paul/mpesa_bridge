@@ -141,7 +141,7 @@ export default function Projects() {
                                             type="text"
                                             value={editName}
                                             onChange={(e) => setEditName(e.target.value)}
-                                            className="bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
                                             autoFocus
                                         />
                                     ) : (
