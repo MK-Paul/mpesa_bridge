@@ -45,6 +45,7 @@ interface StatusData {
     status: string;
     count: number;
     totalAmount: number;
+    [key: string]: any;
 }
 
 interface PaymentLinkPerformance {
