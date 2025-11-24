@@ -1,13 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-    TrendingUp,
-    TrendingDown,
     DollarSign,
     Activity,
     CheckCircle2,
     Target,
-    Calendar,
     Loader2
 } from 'lucide-react';
 import {
@@ -24,8 +21,7 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
-    ResponsiveContainer,
-    Legend
+    ResponsiveContainer
 } from 'recharts';
 import { format, subDays } from 'date-fns';
 import api from '../../services/api';
@@ -173,8 +169,8 @@ export default function Analytics() {
                             key={range}
                             onClick={() => setDateRange(range)}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${dateRange === range
-                                    ? 'bg-primary/20 text-primary'
-                                    : 'text-slate-400 hover:text-white'
+                                ? 'bg-primary/20 text-primary'
+                                : 'text-slate-400 hover:text-white'
                                 }`}
                         >
                             {range === '7d' ? 'Last 7 Days' : range === '30d' ? 'Last 30 Days' : 'Last 90 Days'}
@@ -343,7 +339,7 @@ export default function Analytics() {
                                 innerRadius={60}
                                 outerRadius={100}
                                 paddingAngle={5}
-                                label={(entry) => `${entry.status}: ${entry.count}`}
+                                label={(entry: any) => `${entry.status}: ${entry.count}`}
                             >
                                 {statusBreakdown.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.status] || '#64748b'} />
@@ -398,10 +394,10 @@ export default function Analytics() {
                                         </td>
                                         <td className="text-right py-3 px-4">
                                             <span className={`px-3 py-1 rounded-full text-sm font-medium ${link.successRate >= 80
-                                                    ? 'bg-green-500/20 text-green-400'
-                                                    : link.successRate >= 50
-                                                        ? 'bg-yellow-500/20 text-yellow-400'
-                                                        : 'bg-red-500/20 text-red-400'
+                                                ? 'bg-green-500/20 text-green-400'
+                                                : link.successRate >= 50
+                                                    ? 'bg-yellow-500/20 text-yellow-400'
+                                                    : 'bg-red-500/20 text-red-400'
                                                 }`}>
                                                 {link.successRate}%
                                             </span>

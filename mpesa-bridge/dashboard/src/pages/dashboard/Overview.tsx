@@ -23,12 +23,6 @@ interface Transaction {
     createdAt: string;
 }
 
-interface ApiUsage {
-    totalCalls: number;
-    usageHistory: { date: string; count: number }[];
-    topEndpoints: { endpoint: string; count: number }[];
-}
-
 export default function Overview() {
     const { activeProject, environment } = useProjects();
     const [analytics, setAnalytics] = useState<Analytics | null>(null);
