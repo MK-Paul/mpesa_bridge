@@ -1,5 +1,6 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
+import path from 'path';
 
 const app: Application = express();
 
@@ -12,6 +13,7 @@ import projectRoutes from './routes/project.routes';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import adminRoutes from './routes/admin.routes';
+import paymentLinkRoutes from './routes/paymentLink.routes';
 import { apiLimiter } from './middleware/rateLimiter.middleware';
 import { errorHandler } from './middleware/errorHandler.middleware';
 import { analyticsMiddleware } from './middleware/analytics.middleware';
@@ -29,8 +31,8 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/transactions', transactionRoutes);
 app.use('/api/v1/callbacks', callbackRoutes);
 app.use('/api/v1/projects', projectRoutes);
+app.use('/api/v1/payment-links', paymentLinkRoutes);
 
-// Health Check
 // Health Check
 app.get('/health', (req: Request, res: Response) => {
     res.status(200).json({
@@ -41,12 +43,9 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // Serve Frontend (SPA)
-import path from 'path';
 const frontendPath = path.join(__dirname, '../dashboard/dist');
 app.use(express.static(frontendPath));
 
-// Handle SPA routing - return index.html for any unknown route
-// Handle SPA routing - return index.html for any unknown route
 // Handle SPA routing - return index.html for any unknown route
 app.use((req: Request, res: Response) => {
     // If it's an API request that wasn't handled, let it fall through to error handler

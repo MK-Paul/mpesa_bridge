@@ -17,6 +17,8 @@ import Projects from './pages/dashboard/Projects';
 import Transactions from './pages/dashboard/Transactions';
 import APIKeys from './pages/dashboard/APIKeys';
 import Settings from './pages/dashboard/Settings';
+import PaymentLinks from './pages/dashboard/PaymentLinks';
+import Checkout from './pages/public/Checkout';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminTransactions from './pages/admin/AdminTransactions';
@@ -37,24 +39,33 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
-            {/* Protected Routes (Dashboard) */}
-            <Route element={<ProtectedRoute />}>
-              <Route element={<DashboardLayout />}>
-                <Route path="/dashboard" element={<Overview />} />
-                <Route path="/dashboard/projects" element={<Projects />} />
-                <Route path="/dashboard/transactions" element={<Transactions />} />
-                <Route path="/dashboard/keys" element={<APIKeys />} />
-                <Route path="/dashboard/settings" element={<Settings />} />
-              </Route>
-            </Route>
+            {/* Public Payment Link Route */}
+            <Route path="/pay/:slug" element={<Checkout />} />
 
             {/* Protected Routes (Admin) */}
-            <Route element={<ProtectedRoute />}>
-              <Route element={<AdminLayout />}>
-                <Route path="/admin" element={<AdminAnalytics />} />
-                <Route path="/admin/users" element={<AdminUsers />} />
-                <Route path="/admin/transactions" element={<AdminTransactions />} />
-              </Route>
+            <Route path="/admin" element={
+              <ProtectedRoute requireAdmin>
+                <AdminLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<Navigate to="/admin/users" replace />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="analytics" element={<AdminAnalytics />} />
+              <Route path="transactions" element={<AdminTransactions />} />
+            </Route>
+
+            {/* Protected Routes (Dashboard) */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<Overview />} />
+              <Route path="transactions" element={<Transactions />} />
+              <Route path="projects" element={<Projects />} />
+              <Route path="payment-links" element={<PaymentLinks />} />
+              <Route path="api-keys" element={<APIKeys />} />
+              <Route path="settings" element={<Settings />} />
             </Route>
 
             {/* Catch all */}

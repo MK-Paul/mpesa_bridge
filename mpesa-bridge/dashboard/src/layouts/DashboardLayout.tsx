@@ -11,7 +11,8 @@ import {
     X,
     TestTube,
     Globe,
-    FolderOpen
+    FolderOpen,
+    Link as LinkIcon
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -28,8 +29,9 @@ export default function DashboardLayout() {
     const menuItems = [
         { path: '/dashboard', label: 'Overview', icon: LayoutDashboard },
         { path: '/dashboard/projects', label: 'Projects', icon: FolderOpen },
+        { path: '/dashboard/payment-links', label: 'Payment Links', icon: LinkIcon },
         { path: '/dashboard/transactions', label: 'Transactions', icon: Receipt },
-        { path: '/dashboard/keys', label: 'API Keys', icon: Key },
+        { path: '/dashboard/api-keys', label: 'API Keys', icon: Key },
         { path: '/dashboard/settings', label: 'Settings', icon: Settings },
     ];
 
