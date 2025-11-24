@@ -32,7 +32,6 @@ interface ApiUsage {
 export default function Overview() {
     const { activeProject, environment } = useProjects();
     const [analytics, setAnalytics] = useState<Analytics | null>(null);
-    const [apiUsage, setApiUsage] = useState<ApiUsage | null>(null);
     const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
@@ -75,20 +74,16 @@ export default function Overview() {
             const projectIdParam = activeProject ? `?projectId=${activeProject.id}` : '?';
             const envParam = `&environment=${environment}`;
 
-            const [analyticsRes, transactionsRes, apiUsageRes] = await Promise.all([
+            const [analyticsRes, transactionsRes] = await Promise.all([
                 axios.get(`${import.meta.env.VITE_API_URL}/user/analytics${projectIdParam}${envParam}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 }),
                 axios.get(`${import.meta.env.VITE_API_URL}/user/transactions${projectIdParam}${envParam}&limit=5`, {
                     headers: { Authorization: `Bearer ${token}` }
-                }),
-                axios.get(`${import.meta.env.VITE_API_URL}/user/api-usage`, { // API usage is global for now
-                    headers: { Authorization: `Bearer ${token}` }
                 })
             ]);
             setAnalytics(analyticsRes.data.analytics);
             setRecentTransactions(transactionsRes.data.transactions || []);
-            setApiUsage(apiUsageRes.data);
         } catch (error) {
             console.error('Failed to fetch overview data:', error);
         } finally {
@@ -211,76 +206,7 @@ export default function Overview() {
                 })}
             </div>
 
-            {/* API Usage Stats */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Usage Graph (Simple Bar Chart) */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="lg:col-span-2 glass rounded-2xl p-6 border border-white/10"
-                >
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-xl font-bold">API Usage</h3>
-                        <span className="text-sm text-slate-400">Last 7 Days</span>
-                    </div>
-                    <div className="h-64 flex items-end gap-4 pb-6">
-                        {apiUsage?.usageHistory.map((day, i) => {
-                            const max = Math.max(...(apiUsage?.usageHistory.map(d => d.count) || [1]));
-                            const height = max > 0 ? (day.count / max) * 100 : 0;
-                            return (
-                                <div key={day.date} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
-                                    <div className="w-full bg-white/5 rounded-t-lg relative flex items-end overflow-hidden" style={{ height: '100%' }}>
-                                        <motion.div
-                                            initial={{ height: 0 }}
-                                            animate={{ height: `${height}%` }}
-                                            transition={{ duration: 1, delay: i * 0.1 }}
-                                            className="w-full bg-primary/50 group-hover:bg-primary/70 transition-colors absolute bottom-0"
-                                        />
-                                    </div>
-                                    <div className="text-center">
-                                        <span className="text-xs font-bold block mb-1">{day.count}</span>
-                                        <span className="text-[10px] text-slate-400 block whitespace-nowrap">
-                                            {new Date(day.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                                        </span>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                        {(!apiUsage?.usageHistory || apiUsage.usageHistory.length === 0) && (
-                            <div className="w-full h-full flex items-center justify-center text-slate-500">
-                                No data available
-                            </div>
-                        )}
-                    </div>
-                </motion.div>
 
-                {/* Top Endpoints */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="glass rounded-2xl p-6 border border-white/10"
-                >
-                    <h3 className="text-xl font-bold mb-6">Top Endpoints</h3>
-                    <div className="space-y-4">
-                        {apiUsage?.topEndpoints.map((endpoint, i) => (
-                            <div key={i} className="flex items-center justify-between">
-                                <div className="flex items-center gap-3 overflow-hidden">
-                                    <div className="w-8 h-8 flex-shrink-0 rounded-lg bg-white/5 flex items-center justify-center text-xs font-mono text-slate-400">
-                                        {i + 1}
-                                    </div>
-                                    <code className="text-sm text-slate-300 truncate" title={endpoint.endpoint}>{endpoint.endpoint}</code>
-                                </div>
-                                <span className="text-sm font-semibold text-white">{endpoint.count}</span>
-                            </div>
-                        ))}
-                        {(!apiUsage?.topEndpoints || apiUsage.topEndpoints.length === 0) && (
-                            <p className="text-slate-400 text-center py-8">No API calls yet</p>
-                        )}
-                    </div>
-                </motion.div>
-            </div>
 
             {/* Recent Transactions */}
             <motion.div

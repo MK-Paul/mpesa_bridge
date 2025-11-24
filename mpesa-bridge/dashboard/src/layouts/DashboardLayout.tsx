@@ -12,7 +12,9 @@ import {
     TestTube,
     Globe,
     FolderOpen,
-    Link as LinkIcon
+    Link as LinkIcon,
+    BarChart3,
+    Code2
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -30,8 +32,10 @@ export default function DashboardLayout() {
         { path: '/dashboard', label: 'Overview', icon: LayoutDashboard },
         { path: '/dashboard/projects', label: 'Projects', icon: FolderOpen },
         { path: '/dashboard/payment-links', label: 'Payment Links', icon: LinkIcon },
+        { path: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
         { path: '/dashboard/transactions', label: 'Transactions', icon: Receipt },
         { path: '/dashboard/api-keys', label: 'API Keys', icon: Key },
+        { path: '/dashboard/developer', label: 'Developer Tools', icon: Code2 },
         { path: '/dashboard/settings', label: 'Settings', icon: Settings },
     ];
 

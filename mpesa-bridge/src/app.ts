@@ -14,6 +14,7 @@ import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import adminRoutes from './routes/admin.routes';
 import paymentLinkRoutes from './routes/paymentLink.routes';
+import analyticsRoutes from './routes/analytics.routes';
 import { apiLimiter } from './middleware/rateLimiter.middleware';
 import { errorHandler } from './middleware/errorHandler.middleware';
 import { analyticsMiddleware } from './middleware/analytics.middleware';
@@ -32,6 +33,7 @@ app.use('/api/v1/transactions', transactionRoutes);
 app.use('/api/v1/callbacks', callbackRoutes);
 app.use('/api/v1/projects', projectRoutes);
 app.use('/api/v1/payment-links', paymentLinkRoutes);
+app.use('/api/v1/analytics', analyticsRoutes);
 
 // Health Check
 app.get('/health', (req: Request, res: Response) => {
