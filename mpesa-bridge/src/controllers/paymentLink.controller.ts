@@ -1,4 +1,3 @@
-```typescript
 import { Request, Response } from 'express';
 import { prisma } from '../config/prisma';
 import { MpesaService } from '../services/mpesa.service';
@@ -143,7 +142,7 @@ export class PaymentLinkController {
             // Get credentials directly
             const project = link.project;
             if (!project.consumerKey || !project.consumerSecret || !project.passkey) {
-                 return res.status(400).json({ success: false, message: 'Merchant credentials not configured' });
+                return res.status(400).json({ success: false, message: 'Merchant credentials not configured' });
             }
 
             const consumerKey = decrypt(project.consumerKey);
@@ -173,13 +172,13 @@ export class PaymentLinkController {
                     amount: link.amount,
                     phoneNumber,
                     reference: link.slug,
-                    description: `Payment for ${ link.title }`,
+                    description: `Payment for ${link.title}`,
                     status: 'PENDING'
                 }
             });
 
-            res.json({ 
-                success: true, 
+            res.json({
+                success: true,
                 message: 'Payment initiated',
                 data: {
                     checkoutRequestId: result.CheckoutRequestID
@@ -192,4 +191,3 @@ export class PaymentLinkController {
         }
     }
 }
-```
