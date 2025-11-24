@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node dist/server.js",
     "dev": "nodemon src/server.ts",
-    "build": "npm install --prefix dashboard && npm run build --prefix dashboard && tsc",
+    "build": "npm install --prefix dashboard && npm run build --prefix dashboard && node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write \"src/**/*.ts\""
   },
