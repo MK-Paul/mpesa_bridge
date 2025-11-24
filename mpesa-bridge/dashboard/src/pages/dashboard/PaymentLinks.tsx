@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Copy, ExternalLink, Trash2, Link as LinkIcon, Search } from 'lucide-react';
-import { useProject } from '../../context/ProjectContext';
+import { Plus, Copy, ExternalLink, Link as LinkIcon, Search } from 'lucide-react';
+import { useProjects } from '../../context/ProjectContext';
 import axios from 'axios';
 
 interface PaymentLink {
@@ -19,7 +19,7 @@ interface PaymentLink {
 }
 
 const PaymentLinks = () => {
-    const { activeProject } = useProject();
+    const { activeProject } = useProjects();
     const [links, setLinks] = useState<PaymentLink[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);

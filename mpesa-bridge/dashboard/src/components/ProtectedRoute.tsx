@@ -1,12 +1,25 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-export default function ProtectedRoute() {
-    const { isAuthenticated, isLoading } = useAuth();
+interface ProtectedRouteProps {
+    requireAdmin?: boolean;
+    children?: React.ReactNode;
+}
+
+export default function ProtectedRoute({ requireAdmin = false, children }: ProtectedRouteProps) {
+    const { isAuthenticated, isLoading, user } = useAuth();
 
     if (isLoading) {
         return <div className="min-h-screen flex items-center justify-center bg-background text-white">Loading...</div>;
     }
 
-    return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+    if (!isAuthenticated) {
+        return <Navigate to="/login" replace />;
+    }
+
+    if (requireAdmin && user?.role !== 'ADMIN') {
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    return children ? <>{children}</> : <Outlet />;
 }
