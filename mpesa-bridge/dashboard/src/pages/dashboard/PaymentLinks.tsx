@@ -61,9 +61,10 @@ const PaymentLinks = () => {
       setShowCreateModal(false);
       setFormData({ title: '', description: '', amount: '', slug: '' });
       fetchLinks();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create link:', error);
-      alert('Failed to create link. Slug might be taken.');
+      const message = error.response?.data?.message || 'Failed to create link. Please try again.';
+      alert(message);
     }
   };
 
@@ -73,7 +74,7 @@ const PaymentLinks = () => {
     alert('Link copied to clipboard!');
   };
 
-  const filteredLinks = links.filter(link => 
+  const filteredLinks = links.filter(link =>
     link.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     link.slug.toLowerCase().includes(searchTerm.toLowerCase())
   );

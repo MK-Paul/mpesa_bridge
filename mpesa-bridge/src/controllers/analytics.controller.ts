@@ -18,7 +18,7 @@ export class AnalyticsController {
                 return;
             }
 
-            const { projectId, startDate, endDate } = req.query;
+            const { projectId, startDate, endDate, environment } = req.query;
 
             // Build date filter
             const dateFilter: any = {};
@@ -58,6 +58,9 @@ export class AnalyticsController {
             const transactionFilter: any = {
                 projectId: { in: projectIds }
             };
+            if (environment) {
+                transactionFilter.environment = environment as any;
+            }
             if (Object.keys(dateFilter).length > 0) {
                 transactionFilter.createdAt = dateFilter;
             }
@@ -114,7 +117,7 @@ export class AnalyticsController {
                 return;
             }
 
-            const { projectId, interval = 'day', startDate, endDate } = req.query;
+            const { projectId, interval = 'day', startDate, endDate, environment } = req.query;
 
             // Build date filter - default to last 30 days
             const end = endDate ? new Date(endDate as string) : new Date();
@@ -147,7 +150,8 @@ export class AnalyticsController {
                     createdAt: {
                         gte: start,
                         lte: end
-                    }
+                    },
+                    ...(environment ? { environment: environment as any } : {})
                 },
                 select: {
                     createdAt: true,
@@ -225,7 +229,7 @@ export class AnalyticsController {
                 return;
             }
 
-            const { projectId, startDate, endDate } = req.query;
+            const { projectId, startDate, endDate, environment } = req.query;
 
             // Build date filter
             const dateFilter: any = {};
@@ -258,6 +262,9 @@ export class AnalyticsController {
             const transactionFilter: any = {
                 projectId: { in: projectIds }
             };
+            if (environment) {
+                transactionFilter.environment = environment as any;
+            }
             if (Object.keys(dateFilter).length > 0) {
                 transactionFilter.createdAt = dateFilter;
             }
@@ -297,7 +304,7 @@ export class AnalyticsController {
                 return;
             }
 
-            const { projectId, startDate, endDate } = req.query;
+            const { projectId, startDate, endDate, environment } = req.query;
 
             // Build date filter
             const dateFilter: any = {};
@@ -338,9 +345,10 @@ export class AnalyticsController {
                     slug: true,
                     amount: true,
                     transactions: {
-                        where: Object.keys(dateFilter).length > 0
-                            ? { createdAt: dateFilter }
-                            : undefined,
+                        where: {
+                            ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}),
+                            ...(environment ? { environment: environment as any } : {})
+                        },
                         select: {
                             status: true,
                             amount: true
